@@ -5,23 +5,53 @@ import fr.dgac.ivy.IvyClient;
 import fr.dgac.ivy.IvyException;
 import fr.dgac.ivy.IvyMessageListener;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Timer;
 
 
 public class Fusion extends javax.swing.JFrame {
     String adresse;
     Ivy bus;
     Point coord;
-    String color;
+    String color, gesture, inForm = "";
+    int X, Y;
+    Object obj;
     HashMap<String, Geste> dicoGestes;
     Geste geste = new Geste();
     
+    private enum PossibleState{
+        IDLE,
+        CREER,      // créer
+        CLIC_C,
+        DIRE_C,
+        COLOR_C,
+        THIS_COLOR,
+        DEPL,       // déplacer
+        DIRE_POS,
+        CLIC_POS,
+        CLIC_OBJ,
+        DIRE_OBJ,
+        OBJ_D,
+        SUPPR,      // supprimer
+        DIRE_S,
+        CLIC_S,
+        FIN_S;      
+    }
+    
+    private PossibleState currentState;
+    
+    private void setState(PossibleState aState){
+        currentState = aState;
+    }
+    
     public Fusion() {
-        
         initComponents();
+        setState(PossibleState.IDLE);
         adresse = "localhost:2010";
         bus = new Ivy("Interface Ivy", "", null);
         coord = new Point(0, 0);
@@ -29,9 +59,16 @@ public class Fusion extends javax.swing.JFrame {
         dicoGestes = new HashMap<>();
         initDicoGestes();
         
+        gesture = "";
+        X = -10;
+        Y = -10;
+        obj = null;
+        
+        
         //Start bus ivy
         try {
             bus.start(adresse);
+            bus.sendMsg("Palette:CreerEllipse x=" + 0 + " y=" + 0 + " longueur=15 hauteur=30 couleurFond=Green couleurContour=Green");
         } catch (IvyException ex) {
             Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -41,8 +78,70 @@ public class Fusion extends javax.swing.JFrame {
                 @Override
                 public void receive(IvyClient arg0, String[] arg1) {
                     try {
-                        bus.sendMsg("Palette:CreerEllipse x=" + arg1[0] + " y=" + arg1[1] + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
-                        geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
+                        X = Integer.parseInt(arg1[0]);
+                        Y = Integer.parseInt(arg1[1]);
+                        bus.sendMsg("Palette:CreerEllipse x=" + 0 + " y=" + 0 + " longueur=100 hauteur=100 couleurFond=Yellow couleurContour=Green");
+                        
+                        bus.sendMsg("Palette:TesterPoint x="+X+" y="+Y);
+                        bus.bindMsg("^Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
+                            @Override
+                            public void receive(IvyClient ic, String[] strings) {
+                                inForm = strings[2];
+                                System.out.print(inForm + "----------------" + strings[0] +""+strings[1]);
+                            }
+                        });
+                        
+                        
+                        
+                        switch (currentState){
+                            case IDLE :
+                                bus.sendMsg("Palette:CreerEllipse x=" + X + " y=" + Y + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
+                                geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
+                                break; 
+                            case CREER :        // Créer
+                                // tester si c'est dans un objet
+                                break;
+                            case CLIC_C :
+                                break;
+                            case DIRE_C :
+                                setState(PossibleState.CREER);
+                                // do A4
+                                break; 
+                            case COLOR_C :
+                                break; 
+                            case THIS_COLOR :
+                                setState(PossibleState.CREER);
+                                // do A5
+                                break;
+                            case DEPL :         //Déplacer
+                                //tester si dans l'objet
+                                break; 
+                            case DIRE_POS :
+                                setState(PossibleState.DEPL);
+                                // do A5-depl
+                                break;
+                            case CLIC_POS : 
+                                break;
+                            case CLIC_OBJ :
+                                break;
+                            case DIRE_OBJ :
+                                setState(PossibleState.OBJ_D);
+                                break;
+                            case OBJ_D :
+                                break;
+                            case SUPPR :        // Supprimer
+                                setState(PossibleState.DIRE_S);
+                                // do A5
+                                break;
+                            case DIRE_S : 
+                                break;
+                            case CLIC_S :
+                                setState(PossibleState.FIN_S);
+                                // do A5-suppr
+                                break;
+                            case FIN_S :          
+                                break;
+                        }
                     } catch (IvyException ex) {
                         Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -57,7 +156,8 @@ public class Fusion extends javax.swing.JFrame {
                         geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
                         geste.normalize();
                         System.out.println(compareGeste());
-                        geste = new Geste();
+                        geste = new Geste(); 
+                        System.out.println(currentState);
                         //bus.sendMsg("Palette:SupprimerTout");
                     } catch (IvyException ex) {
                         Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
@@ -76,8 +176,6 @@ public class Fusion extends javax.swing.JFrame {
                     }
                 }
             });
-            
-            
         } catch (IvyException ex) {
             Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -210,15 +308,104 @@ public class Fusion extends javax.swing.JFrame {
             }*/
         }
         
-        System.out.println("rect : " + distanceRect);
-        System.out.println("cercle : " + distanceCercle);
-        System.out.println("trait : " + distanceTrait);
-        System.out.println("croix : " + distanceCroix);
-        double score = 1 - (distanceRect / (1/2 * Math.sqrt(Math.pow(dicoGestes.get("Rectangle").size(), 2)+Math.pow(dicoGestes.get("Rectangle").size(), 2))));
-        System.out.println("score : " + score );
+//        System.out.println("rect : " + distanceRect);
+//        System.out.println("cercle : " + distanceCercle);
+//        System.out.println("trait : " + distanceTrait);
+//        System.out.println("croix : " + distanceCroix);
+//        double score = 1 - (distanceRect / (1/2 * Math.sqrt(Math.pow(dicoGestes.get("Rectangle").size(), 2)+Math.pow(dicoGestes.get("Rectangle").size(), 2))));
+//        System.out.println("score : " + score );
         
+        launch(geste);
         
         return geste;
+    }
+    
+    Timer timer = new Timer(3000, new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            timerStartActionPerformed(e);
+        }
+    });
+        
+    public void launch (String gesture) {
+        if (gesture == "Cercle") {
+           setState(PossibleState.CREER);
+        } else if (gesture == "Rectangle") {
+            setState(PossibleState.CREER);
+        } else if (gesture == "Deplacer") {
+            setState(PossibleState.DEPL);
+            timer.start();
+        } else if (gesture == "Supprimer") {
+            setState(PossibleState.SUPPR);
+        }     
+    }
+    
+    private void timerStartActionPerformed(ActionEvent e) {
+        switch (currentState){
+            case IDLE :
+                break; 
+            case CREER : 
+                setState(PossibleState.IDLE);
+                if (gesture == "rect") {
+                    //do A1
+                } else if (gesture == "oval") {
+                    //do A2
+                }
+                break;
+            case CLIC_C :
+                setState(PossibleState.CREER);
+                break;
+            case DIRE_C :
+                setState(PossibleState.CREER);
+                break; 
+            case COLOR_C :
+                setState(PossibleState.CREER);
+                break; 
+            case THIS_COLOR :
+                setState(PossibleState.CREER);
+                break;
+            case DEPL :
+                System.err.println(currentState);
+                setState(PossibleState.IDLE);
+                if (X > 0 && Y > 0 && obj == null) {
+                    //do A1 && A3
+                } else {
+                    //do A2 && A3
+                }
+                System.err.println(currentState);
+                break; 
+            case DIRE_POS :
+                setState(PossibleState.DEPL);
+                break;
+            case CLIC_POS : 
+                setState(PossibleState.DEPL);
+                break;
+            case CLIC_OBJ :
+                setState(PossibleState.DEPL);
+                break;
+            case DIRE_OBJ :
+                setState(PossibleState.DEPL);
+                break;
+            case OBJ_D :
+                setState(PossibleState.DEPL);
+                break;
+            case SUPPR : 
+                setState(PossibleState.IDLE);
+                //do A3
+                break;
+            case DIRE_S : 
+                setState(PossibleState.IDLE);
+                //do A3
+                break;
+            case CLIC_S :
+                setState(PossibleState.IDLE);
+                //do A3
+                break;
+            case FIN_S :    
+                setState(PossibleState.IDLE);
+                //do A1 && A3
+                break;
+        }
     }
    
 
@@ -282,3 +469,39 @@ public class Fusion extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     // End of variables declaration//GEN-END:variables
 }
+
+////-----------------------------  TEMPLATE ------------------------------------
+//switch (currentState){
+//            case IDLE :
+//                break; 
+//            case CREER : 
+//                break;
+//            case CLIC_C :
+//                break;
+//            case DIRE_C :
+//                break; 
+//            case COLOR_C :
+//                break; 
+//            case THIS_COLOR :
+//                break;
+//            case DEPL :
+//                break; 
+//            case DIRE_POS :
+//                break;
+//            case CLIC_POS : 
+//                break;
+//            case CLIC_OBJ :
+//                break;
+//            case DIRE_OBJ :
+//                break;
+//            case OBJ_D :
+//                break;
+//            case SUPPR : 
+//                break;
+//            case DIRE_S : 
+//                break;
+//            case CLIC_S :
+//                break;
+//            case FIN_S :          
+//                break;
+//        }
