@@ -98,8 +98,7 @@ public class Fusion extends javax.swing.JFrame {
                 @Override
                 public void receive(IvyClient arg0, String[] arg1) {
                     try {
-                        X = Integer.parseInt(arg1[0]);
-                        Y = Integer.parseInt(arg1[1]);
+                        timer.stop();
                         //bus.sendMsg("Palette:CreerEllipse x=" + 0 + " y=" + 0 + " longueur=100 hauteur=100 couleurFond=Yellow couleurContour=Green");
                         //inForm = inObject(X, Y);
                         System.out.println(inForm);
@@ -115,26 +114,27 @@ public class Fusion extends javax.swing.JFrame {
                                 } else {
                                     System.err.println("VIDE");
                                 }
-                                creerRect(color, X, Y);
                                 break;
                             case CLIC_C :
                                 break;
                             case DIRE_C :
                                 setState(PossibleState.CREER);
-                                // do A4
+                                X = Integer.parseInt(arg1[0]);
+                                Y = Integer.parseInt(arg1[1]);
                                 break; 
                             case COLOR_C :
                                 break; 
                             case THIS_COLOR :
                                 setState(PossibleState.CREER);
-                                // do A5
+                                // do A5 - object.getColor()
                                 break;
                             case DEPL :         //Déplacer
                                 //tester si dans l'objet
                                 break; 
                             case DIRE_POS :
                                 setState(PossibleState.DEPL);
-                                // do A5-depl
+                                X = Integer.parseInt(arg1[0]);
+                                Y = Integer.parseInt(arg1[1]);
                                 break;
                             case CLIC_POS : 
                                 break;
@@ -147,17 +147,20 @@ public class Fusion extends javax.swing.JFrame {
                                 break;
                             case SUPPR :        // Supprimer
                                 setState(PossibleState.DIRE_S);
-                                // do A5
+                                X = Integer.parseInt(arg1[0]);
+                                Y = Integer.parseInt(arg1[1]);
                                 break;
                             case DIRE_S : 
+                                setState(PossibleState.FIN_S);
+                                X = Integer.parseInt(arg1[0]);
+                                Y = Integer.parseInt(arg1[1]);
                                 break;
                             case CLIC_S :
-                                setState(PossibleState.FIN_S);
-                                // do A5-suppr
                                 break;
                             case FIN_S :          
                                 break;
                         }
+                        timer.start();
                     } catch (IvyException ex) {
                         Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -430,9 +433,13 @@ public class Fusion extends javax.swing.JFrame {
             case DEPL :
                 setState(PossibleState.IDLE);
                 if (X < 0 && Y < 0 && obj == null) {
-                    //do A1 && A3
+                    //do A3
+                    deplObjet(color, X, Y); // changer color par un nom
                 } else {
-                    //do A2 && A3
+                    //do A3
+                    X = -10;
+                    Y = -10;
+                    obj = null;
                 }
                 break; 
             case DIRE_POS :
@@ -449,23 +456,24 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case OBJ_D :
                 setState(PossibleState.DEPL);
+                // do A4
                 break;
             case SUPPR : 
                 setState(PossibleState.IDLE);
-                //do A3
+                remiseAzero();
                 break;
             case DIRE_S : 
                 setState(PossibleState.IDLE);
-                //do A3
+                remiseAzero();
                 break;
             case CLIC_S :
                 setState(PossibleState.IDLE);
-                //do A3
+                remiseAzero();
                 break;
             case FIN_S :    
                 setState(PossibleState.IDLE);
                 supprObjet(color, color);
-                //do A3
+                remiseAzero();
                 break; 
         }
     }
