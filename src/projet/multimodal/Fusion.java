@@ -18,7 +18,7 @@ public class Fusion extends javax.swing.JFrame {
     String adresse;
     Ivy bus;
     Point coord;
-    String color, gesture, inForm = "";
+    String color, gesture, inForm;
     int X, Y;
     Object obj;
     HashMap<String, Geste> dicoGestes;
@@ -60,6 +60,7 @@ public class Fusion extends javax.swing.JFrame {
         initDicoGestes();
         
         gesture = "";
+        inForm = "";
         X = -10;
         Y = -10;
         obj = null;
@@ -74,25 +75,32 @@ public class Fusion extends javax.swing.JFrame {
         }
         
         try {
+//            bus.bindMsg("^Palette:MouseClicked.* x=(.*) y=(.*)", new IvyMessageListener() { 
+//                @Override
+//                public void receive(IvyClient arg0, String[] arg1) {
+//                    try {
+//                        bus.sendMsg("Palette:TesterPoint x="+X+" y="+Y);
+//                        bus.bindMsg("^Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
+//                            @Override
+//                            public void receive(IvyClient ic, String[] strings) {
+//                                inForm = strings[2];
+//                            }
+//                        });
+//                        System.out.print(inForm);
+//                    } catch (IvyException ex) {
+//                        Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+//                    }
+//                }
+//            });
+            
             bus.bindMsg("^Palette:MousePressed.* x=(.*) y=(.*)", new IvyMessageListener() { //^=tous les message qui commencent par Palette:MousePressed)
                 @Override
                 public void receive(IvyClient arg0, String[] arg1) {
                     try {
                         X = Integer.parseInt(arg1[0]);
                         Y = Integer.parseInt(arg1[1]);
-                        bus.sendMsg("Palette:CreerEllipse x=" + 0 + " y=" + 0 + " longueur=100 hauteur=100 couleurFond=Yellow couleurContour=Green");
-                        
-                        bus.sendMsg("Palette:TesterPoint x="+X+" y="+Y);
-                        bus.bindMsg("^Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
-                            @Override
-                            public void receive(IvyClient ic, String[] strings) {
-                                inForm = strings[2];
-                                System.out.print(inForm + "----------------" + strings[0] +""+strings[1]);
-                            }
-                        });
-                        
-                        
-                        
+                        //bus.sendMsg("Palette:CreerEllipse x=" + 0 + " y=" + 0 + " longueur=100 hauteur=100 couleurFond=Yellow couleurContour=Green");
+
                         switch (currentState){
                             case IDLE :
                                 bus.sendMsg("Palette:CreerEllipse x=" + X + " y=" + Y + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
@@ -100,6 +108,19 @@ public class Fusion extends javax.swing.JFrame {
                                 break; 
                             case CREER :        // Créer
                                 // tester si c'est dans un objet
+                                bus.sendMsg("Palette:TesterPoint x="+X+" y="+Y);
+                                bus.bindMsg("^Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
+                                    @Override
+                                    public void receive(IvyClient ic, String[] strings) {
+                                        inForm = strings[2];
+                                        if (inForm == "") {
+                                            System.err.println("VIDE");
+                                        } else {
+                                            System.err.println("PLEIN");
+                                        }
+                                    }
+                                });
+                                creerRect(color, X, Y);
                                 break;
                             case CLIC_C :
                                 break;
@@ -152,13 +173,16 @@ public class Fusion extends javax.swing.JFrame {
                 @Override
                 public void receive(IvyClient arg0, String[] arg1) {
                     try {
-                        bus.sendMsg("Palette:CreerEllipse x=" + arg1[0] + " y=" + arg1[1] + " longueur=8 hauteur=8 couleurFond=Red couleurContour=Red");
-                        geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
-                        geste.normalize();
-                        System.out.println(compareGeste());
-                        geste = new Geste(); 
-                        System.out.println(currentState);
-                        //bus.sendMsg("Palette:SupprimerTout");
+                        switch (currentState) {
+                            case IDLE :
+                                bus.sendMsg("Palette:CreerEllipse x=" + arg1[0] + " y=" + arg1[1] + " longueur=8 hauteur=8 couleurFond=Red couleurContour=Red");
+                                geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
+                                geste.normalize();
+                                compareGeste();
+                                geste = new Geste(); 
+                                System.out.println(currentState);
+                                //bus.sendMsg("Palette:SupprimerTout");
+                        }
                     } catch (IvyException ex) {
                         Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -169,10 +193,13 @@ public class Fusion extends javax.swing.JFrame {
                 @Override
                 public void receive(IvyClient arg0, String[] arg1) {
                     try {
-                        bus.sendMsg("Palette:CreerEllipse x=" + arg1[0] + " y=" + arg1[1] + " longueur=5 hauteur=5 couleurFond=Grey couleurContour=Grey");
-                        geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
-                    } catch (IvyException ex) {
-                        Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+                        switch (currentState) {
+                            case IDLE :
+                                bus.sendMsg("Palette:CreerEllipse x=" + arg1[0] + " y=" + arg1[1] + " longueur=5 hauteur=5 couleurFond=Grey couleurContour=Grey");
+                                geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
+                            }
+                        } catch (IvyException ex) {
+                            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             });
@@ -185,6 +212,40 @@ public class Fusion extends javax.swing.JFrame {
             bus.bindMsg("^sra5 Text=(.*) Confidence=.*", new IvyMessageListener() {// abonnement
                 public void receive(IvyClient client,String[] args) {
                     System.out.print(args[0]);
+                    switch (currentState){
+                        case IDLE :
+                            break; 
+                        case CREER : 
+                            break;
+                        case CLIC_C :
+                            break;
+                        case DIRE_C :
+                            break; 
+                        case COLOR_C :
+                            break; 
+                        case THIS_COLOR :
+                            break;
+                        case DEPL :
+                            break; 
+                        case DIRE_POS :
+                            break;
+                        case CLIC_POS : 
+                            break;
+                        case CLIC_OBJ :
+                            break;
+                        case DIRE_OBJ :
+                            break;
+                        case OBJ_D :
+                            break;
+                        case SUPPR : 
+                            break;
+                        case DIRE_S : 
+                            break;
+                        case CLIC_S :
+                            break;
+                        case FIN_S :          
+                            break;
+                    }
                 }
             });
         } catch (IvyException ex) {
@@ -328,15 +389,19 @@ public class Fusion extends javax.swing.JFrame {
     });
         
     public void launch (String gesture) {
-        if (gesture == "Cercle") {
+        this.gesture = gesture;
+        if ("Cercle".equals(gesture)) {
            setState(PossibleState.CREER);
-        } else if (gesture == "Rectangle") {
+           timer.start();
+        } else if ("Rectangle".equals(gesture)) {
             setState(PossibleState.CREER);
-        } else if (gesture == "Deplacer") {
+            timer.start();
+        } else if ("Deplacer".equals(gesture)) {
             setState(PossibleState.DEPL);
             timer.start();
-        } else if (gesture == "Supprimer") {
+        } else if ("Supprimer".equals(gesture)) {
             setState(PossibleState.SUPPR);
+            timer.start();
         }     
     }
     
@@ -346,11 +411,14 @@ public class Fusion extends javax.swing.JFrame {
                 break; 
             case CREER : 
                 setState(PossibleState.IDLE);
-                if (gesture == "rect") {
+                if ("Rectangle".equals(gesture)) {
+                    System.out.println("rect");
                     //do A1
-                } else if (gesture == "oval") {
+                } else if ("Cercle".equals(gesture)) {
+                    System.out.println("oval");
                     //do A2
                 }
+                System.out.println(currentState);
                 break;
             case CLIC_C :
                 setState(PossibleState.CREER);
@@ -365,14 +433,12 @@ public class Fusion extends javax.swing.JFrame {
                 setState(PossibleState.CREER);
                 break;
             case DEPL :
-                System.err.println(currentState);
                 setState(PossibleState.IDLE);
                 if (X > 0 && Y > 0 && obj == null) {
                     //do A1 && A3
                 } else {
                     //do A2 && A3
                 }
-                System.err.println(currentState);
                 break; 
             case DIRE_POS :
                 setState(PossibleState.DEPL);
@@ -407,6 +473,51 @@ public class Fusion extends javax.swing.JFrame {
                 break;
         }
     }
+    
+    public void creerRect(String color, int x, int y){
+        try {
+            bus.sendMsg("Palette:CreerRectangle x=" + x + " y=" + y + " longueur=100 "
+                    + "hauteur=100 couleurFond=" + color + " couleurContour=" + color);
+        } catch (IvyException ex) {
+            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+    
+    public void creerEllipse(String color, int x, int y){
+        try {
+            bus.sendMsg("Palette:CreerEllipse x=" + x + " y=" + y + " longueur=100 "
+                    + "hauteur=100 couleurFond=" + color + " couleurContour=" + color);
+        } catch (IvyException ex) {
+            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+    
+    public void supprObjet(String color, String nom){
+        try {
+            bus.sendMsg("Palette:SupprimerObjet nom=" + nom);
+        } catch (IvyException ex) {
+            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    public void deplObjet(String nom, int x, int y){
+        try {
+            bus.sendMsg("Palette:DeplacerObjetAbsolu nom=" + nom + " x=" + x +
+                    " y=" + y);
+        } catch (IvyException ex) {
+            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    public void remiseAzero(){
+        obj = null;
+        color = "Black";
+        X = -10;
+        Y = -10;
+    }
+    
    
 
 
