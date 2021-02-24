@@ -24,9 +24,10 @@
 	 <!-- =========================================== -->
      <rule id="objet">
 			<one-of>
-					<item> ce rectangle </item>
 					<item> cet objet </item>
+					<item> cette forme </item>
 					<item> cette ellipse</item>
+					<item> ce rectangle </item>
 			</one-of>
      </rule>	
 	
@@ -35,13 +36,14 @@
      <rule id="couleur">
 			<one-of>
 					<item> rouge </item>
-					<item> bleu </item>
-					<item> vert </item>
-					<item> noir </item>
-					<item> rose </item>
 					<item> orange </item>
 					<item> jaune </item>
+					<item> bleu </item>
+					<item> vert </item>
+					<item> rose </item>
+					<item> violet </item>
 					<item> gris </item>
+					<item> noir </item>
 			</one-of>
      </rule>
 		
@@ -52,6 +54,7 @@
 					<item> ici </item>
 					<item> la </item>
 					<item> a cette position </item>
+					<item> à cet endroit </item>
 			</one-of>
      </rule>
 </grammar>

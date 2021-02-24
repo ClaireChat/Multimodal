@@ -254,6 +254,9 @@ public class Fusion extends javax.swing.JFrame {
         
     }
     
+    /*
+    * Fonction permettant d'intialiser le dictionnaiire des gestes
+    */
     public void initDicoGestes() {
         Geste rect = new Geste();
         Geste cercle = new Geste();
@@ -301,17 +304,24 @@ public class Fusion extends javax.swing.JFrame {
             cercle.addPoint((int) x , (int)y);
         }
         
+        // Normalisation des gestes
         rect.normalize();
         trait.normalize();
         croix.normalize();
         cercle.normalize();
         
+        // Ajout des gestes normalisés au dictionnaire
         this.dicoGestes.put("Rectangle", rect);
         this.dicoGestes.put("Cercle", cercle);
         this.dicoGestes.put("Deplacer", trait);
         this.dicoGestes.put("Supprimer", croix);
     }
     
+    /*
+    * Fonction permettant de comparer le geste réalisé sur la palette avec le 
+    * dictionnaire des gestes
+    * Retourne le geste le plus proche de celui réalisé
+    */
     public String compareGeste() {
 
         double sommeRect=0;
@@ -319,6 +329,7 @@ public class Fusion extends javax.swing.JFrame {
         double sommeCercle=0;
         double sommeCroix=0;
         
+        // Parcours des points du geste réalisé sur la palette
         for(int i=0; i<geste.size(); i++) {
             double x = geste.getPoints().get(i).x;
             double y = geste.getPoints().get(i).y;
@@ -339,6 +350,8 @@ public class Fusion extends javax.swing.JFrame {
             double yCroix = dicoGestes.get("Supprimer").getPoints().get(i).y;
             sommeCroix = Math.sqrt( Math.pow((x - xCroix), 2) + Math.pow((y - yCroix), 2) );
         }
+        
+        //Calcul des distances entre le geste réalisés et ceux du dictionnaire de gestes
         double distanceRect = sommeRect/geste.size();
         double distanceCercle = sommeCercle/geste.size();
         double distanceTrait= sommeTrait/geste.size();
@@ -352,6 +365,7 @@ public class Fusion extends javax.swing.JFrame {
         
         String geste = "";
         Double min = null;
+        // Parcours de la map avec les distances pour récupérer la plus petite
         for (Map.Entry<String, Double> map : distances.entrySet()) {
             if(min==null) {
                 min = map.getValue();
@@ -361,18 +375,12 @@ public class Fusion extends javax.swing.JFrame {
                 min = map.getValue();
                 geste = map.getKey();
             }
-            /*if(map.getValue()<min || min==null) {
-                min = map.getValue();
-                geste = map.getKey();
-            }*/
         }
         
 //        System.out.println("rect : " + distanceRect);
 //        System.out.println("cercle : " + distanceCercle);
 //        System.out.println("trait : " + distanceTrait);
 //        System.out.println("croix : " + distanceCroix);
-//        double score = 1 - (distanceRect / (1/2 * Math.sqrt(Math.pow(dicoGestes.get("Rectangle").size(), 2)+Math.pow(dicoGestes.get("Rectangle").size(), 2))));
-//        System.out.println("score : " + score );
         
         launch(geste);
         
