@@ -18,7 +18,8 @@ public class Fusion extends javax.swing.JFrame {
     String adresse;
     Ivy bus;
     Point coord;
-    String color, gesture, inForm;
+    String color, gesture;
+    Boolean inForm, isInObj;
     int X, Y;
     Object obj;
     HashMap<String, Geste> dicoGestes;
@@ -60,7 +61,7 @@ public class Fusion extends javax.swing.JFrame {
         initDicoGestes();
         
         gesture = "";
-        inForm = "";
+        inForm = false;
         X = -10;
         Y = -10;
         obj = null;
@@ -100,7 +101,8 @@ public class Fusion extends javax.swing.JFrame {
                         X = Integer.parseInt(arg1[0]);
                         Y = Integer.parseInt(arg1[1]);
                         //bus.sendMsg("Palette:CreerEllipse x=" + 0 + " y=" + 0 + " longueur=100 hauteur=100 couleurFond=Yellow couleurContour=Green");
-
+                        //inForm = inObject(X, Y);
+                        System.out.println(inForm);
                         switch (currentState){
                             case IDLE :
                                 bus.sendMsg("Palette:CreerEllipse x=" + X + " y=" + Y + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
@@ -108,18 +110,11 @@ public class Fusion extends javax.swing.JFrame {
                                 break; 
                             case CREER :        // Créer
                                 // tester si c'est dans un objet
-                                bus.sendMsg("Palette:TesterPoint x="+X+" y="+Y);
-                                bus.bindMsg("^Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
-                                    @Override
-                                    public void receive(IvyClient ic, String[] strings) {
-                                        inForm = strings[2];
-                                        if (inForm == "") {
-                                            System.err.println("VIDE");
-                                        } else {
-                                            System.err.println("PLEIN");
-                                        }
-                                    }
-                                });
+                                if (inForm == true) {
+                                    System.err.println("DANS LA FORME");
+                                } else {
+                                    System.err.println("VIDE");
+                                }
                                 creerRect(color, X, Y);
                                 break;
                             case CLIC_C :
@@ -413,10 +408,10 @@ public class Fusion extends javax.swing.JFrame {
                 setState(PossibleState.IDLE);
                 if ("Rectangle".equals(gesture)) {
                     System.out.println("rect");
-                    //do A1
+                    creerRect(color, X, Y);
                 } else if ("Cercle".equals(gesture)) {
                     System.out.println("oval");
-                    //do A2
+                    creerEllipse(color, X, Y);
                 }
                 System.out.println(currentState);
                 break;
@@ -434,7 +429,7 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case DEPL :
                 setState(PossibleState.IDLE);
-                if (X > 0 && Y > 0 && obj == null) {
+                if (X < 0 && Y < 0 && obj == null) {
                     //do A1 && A3
                 } else {
                     //do A2 && A3
@@ -469,8 +464,9 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case FIN_S :    
                 setState(PossibleState.IDLE);
-                //do A1 && A3
-                break;
+                supprObjet(color, color);
+                //do A3
+                break; 
         }
     }
     
@@ -516,6 +512,30 @@ public class Fusion extends javax.swing.JFrame {
         color = "Black";
         X = -10;
         Y = -10;
+    }
+    
+    public Boolean inObject(int X, int Y){
+        try {
+            bus.sendMsg("Palette:TesterPoint x="+X+" y="+Y);
+            bus.bindMsg("^Palette:ResultatTesterPoint x=" +X+" y="+ Y +" nom=(.*)", new IvyMessageListener() {
+                @Override
+                public void receive(IvyClient ic, String[] strings) {
+                    if (strings[2] == "") {
+                        isInObj = false;
+                        System.out.println("DEHORS");
+                    } else {
+                        isInObj = true;
+                        System.out.println("DEDANS");
+                    }
+                }
+            
+            });
+        } catch (IvyException ex) {
+            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        inForm = isInObj;
+        System.err.println(isInObj);
+        return isInObj;
     }
     
    
