@@ -18,12 +18,10 @@ public class Fusion extends javax.swing.JFrame {
     String adresse;
     Ivy bus;
     Point coord;
-    String color, gesture;
     Boolean inForm, isInObj;
-    int X, Y;
-    Object obj;
     HashMap<String, Geste> dicoGestes;
     Geste geste = new Geste();
+    Commande command;
     
     private enum PossibleState{
         IDLE,
@@ -56,14 +54,10 @@ public class Fusion extends javax.swing.JFrame {
         adresse = "localhost:2010";
         bus = new Ivy("Interface Ivy", "", null);
         coord = new Point(0, 0);
-        color = "Black";
         dicoGestes = new HashMap<>();
         initDicoGestes();
+        command = new Commande();
         
-        gesture = "";
-        X = -10;
-        Y = -10;
-        obj = null;
         
         
         //Start bus ivy
@@ -118,8 +112,8 @@ public class Fusion extends javax.swing.JFrame {
                         System.out.println(isInObj);
                         switch (currentState){
                             case IDLE :
-                                bus.sendMsg("Palette:CreerEllipse x=" + X + " y="
-                                        + Y + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
+                                bus.sendMsg("Palette:CreerEllipse x=" + x + " y="
+                                        + y + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
                                 geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
                                 break; 
                             case CREER :        // Créer
@@ -134,8 +128,8 @@ public class Fusion extends javax.swing.JFrame {
                                 break;
                             case DIRE_C :
                                 setState(PossibleState.CREER);
-                                X = Integer.parseInt(arg1[0]);
-                                Y = Integer.parseInt(arg1[1]);
+                                command.setPosX(Integer.parseInt(arg1[0]));
+                                command.setPosY(Integer.parseInt(arg1[1]));
                                 break; 
                             case COLOR_C :
                                 break; 
@@ -148,8 +142,8 @@ public class Fusion extends javax.swing.JFrame {
                                 break; 
                             case DIRE_POS :
                                 setState(PossibleState.DEPL);
-                                X = Integer.parseInt(arg1[0]);
-                                Y = Integer.parseInt(arg1[1]);
+                                command.setPosX(Integer.parseInt(arg1[0]));
+                                command.setPosY(Integer.parseInt(arg1[1]));
                                 break;
                             case CLIC_POS : 
                                 break;
@@ -162,13 +156,13 @@ public class Fusion extends javax.swing.JFrame {
                                 break;
                             case SUPPR :        // Supprimer
                                 setState(PossibleState.DIRE_S);
-                                X = Integer.parseInt(arg1[0]);
-                                Y = Integer.parseInt(arg1[1]);
+                                command.setPosX(Integer.parseInt(arg1[0]));
+                                command.setPosY(Integer.parseInt(arg1[1]));
                                 break;
                             case DIRE_S : 
                                 setState(PossibleState.FIN_S);
-                                X = Integer.parseInt(arg1[0]);
-                                Y = Integer.parseInt(arg1[1]);
+                                command.setPosX(Integer.parseInt(arg1[0]));
+                                command.setPosY(Integer.parseInt(arg1[1]));
                                 break;
                             case CLIC_S :
                                 break;
@@ -410,7 +404,7 @@ public class Fusion extends javax.swing.JFrame {
     });
         
     public void launch (String gesture) {
-        this.gesture = gesture;
+        command.setAction(gesture);
         if ("Cercle".equals(gesture)) {
            setState(PossibleState.CREER);
            timer.start();
@@ -432,12 +426,12 @@ public class Fusion extends javax.swing.JFrame {
                 break; 
             case CREER : 
                 setState(PossibleState.IDLE);
-                if ("Rectangle".equals(gesture)) {
+                if ("Rectangle".equals(command.getAction())) {
                     System.out.println("rect");
-                    creerRect(color, X, Y);
-                } else if ("Cercle".equals(gesture)) {
+                    creerRect(command.getCouleur(), command.getPosX(), command.getPosY());
+                } else if ("Cercle".equals(command.getAction())) {
                     System.out.println("oval");
-                    creerEllipse(color, X, Y);
+                    creerEllipse(command.getCouleur(), command.getPosX(), command.getPosY());
                 }
                 System.out.println(currentState);
                 break;
@@ -455,14 +449,14 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case DEPL :
                 setState(PossibleState.IDLE);
-                if (X < 0 && Y < 0 && obj == null) {
+                if (command.getPosX() < 0 && command.getPosY() < 0 && command.getObjet() == null) {
                     //do A3
-                    deplObjet(color, X, Y); // changer color par un nom
+                    deplObjet(command.getCouleur(), command.getPosX(), command.getPosY()); // changer color par un nom
                 } else {
                     //do A3
-                    X = -10;
-                    Y = -10;
-                    obj = null;
+                    command.setPosX(-10);
+                    command.setPosX(-10);
+                    command.setObjet(null);
                 }
                 break; 
             case DIRE_POS :
@@ -495,7 +489,7 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case FIN_S :    
                 setState(PossibleState.IDLE);
-                supprObjet(color, color);
+                supprObjet(command.getCouleur(), command.getCouleur()); //2e color = nom
                 remiseAzero();
                 break; 
         }
@@ -539,10 +533,10 @@ public class Fusion extends javax.swing.JFrame {
     }
     
     public void remiseAzero(){
-        obj = null;
-        color = "Black";
-        X = -10;
-        Y = -10;
+        command.setObjet(null);
+        command.setCouleur("Black");
+        command.setPosX(-10);
+        command.setPosY(-10);
     }
     
     public void inObject(int x, int y){
