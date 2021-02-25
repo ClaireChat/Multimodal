@@ -21,6 +21,7 @@ public class Fusion extends javax.swing.JFrame {
     Boolean inForm, isInObj;
     HashMap<String, Geste> dicoGestes;
     Geste geste = new Geste();
+    
     Commande command;
     
     private enum PossibleState{
@@ -68,25 +69,7 @@ public class Fusion extends javax.swing.JFrame {
             Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        try {
-//            bus.bindMsg("^Palette:MouseClicked.* x=(.*) y=(.*)", new IvyMessageListener() { 
-//                @Override
-//                public void receive(IvyClient arg0, String[] arg1) {
-//                    try {
-//                        bus.sendMsg("Palette:TesterPoint x="+X+" y="+Y);
-//                        bus.bindMsg("^Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
-//                            @Override
-//                            public void receive(IvyClient ic, String[] strings) {
-//                                inForm = strings[2];
-//                            }
-//                        });
-//                        System.out.print(inForm);
-//                    } catch (IvyException ex) {
-//                        Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
-//                    }
-//                }
-//            });
-            
+        try {            
             bus.bindMsg("^Palette:MousePressed.* x=(.*) y=(.*)", new IvyMessageListener() { //^=tous les message qui commencent par Palette:MousePressed)
                 @Override
                 public void receive(IvyClient arg0, String[] arg1) {
@@ -94,7 +77,6 @@ public class Fusion extends javax.swing.JFrame {
                         isInObj = false;
                         timer.stop();
                         int x = Integer.parseInt(arg1[0]); int y = Integer.parseInt(arg1[1]);
-                        //bus.sendMsg("Palette:CreerEllipse x=" + 0 + " y=" + 0 + " longueur=100 hauteur=100 couleurFond=Yellow couleurContour=Green");
                         //inObject(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
                         bus.sendMsg("Palette:TesterPoint x="+x+" y="+y);
                         bus.bindMsg("Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
@@ -106,6 +88,22 @@ public class Fusion extends javax.swing.JFrame {
                                 } else {
                                     isInObj = true;
                                     //System.out.println("DEDANS");
+                                    try {
+                                        bus.sendMsg("Palette:DemanderInfo nom="+ strings[2]);
+                                        bus.bindMsg("Palette:Info nom=" + strings[2] + "x=(.*) y=(.*) "
+                                                + "longueur=(.*) hauteur=(.*) couleurFond=(.*) "
+                                                + "couleurContour=(.*)", new IvyMessageListener() {
+                                            @Override
+                                            public void receive(IvyClient ic, String[] arg) {
+                                                System.err.println(arg[0] + " " + arg[1] +
+                                                        " " + arg[2] + " " + arg[3] + " " + 
+                                                        arg[4] + " " + arg[5] + " " + arg[6]);
+                                            }
+                                        });
+
+                                    } catch (IvyException ex) {
+                                        Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
                                 }
                             }
                         });
@@ -450,12 +448,10 @@ public class Fusion extends javax.swing.JFrame {
             case DEPL :
                 setState(PossibleState.IDLE);
                 if (command.getPosX() < 0 && command.getPosY() < 0 && command.getObjet() == null) {
-                    //do A3
-                    deplObjet(command.getCouleur(), command.getPosX(), command.getPosY()); // changer color par un nom
+                    command.clear();
+                    deplObjet(command.getNom(), command.getPosX(), command.getPosY()); // changer color par un nom
                 } else {
-                    //do A3
-                    command.setPosX(-10);
-                    command.setPosX(-10);
+                    command.clear();
                     command.setObjet(null);
                 }
                 break; 
@@ -477,20 +473,20 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case SUPPR : 
                 setState(PossibleState.IDLE);
-                remiseAzero();
+                command.clear();
                 break;
             case DIRE_S : 
                 setState(PossibleState.IDLE);
-                remiseAzero();
+                command.clear();
                 break;
             case CLIC_S :
                 setState(PossibleState.IDLE);
-                remiseAzero();
+                command.clear();
                 break;
             case FIN_S :    
                 setState(PossibleState.IDLE);
-                supprObjet(command.getCouleur(), command.getCouleur()); //2e color = nom
-                remiseAzero();
+                supprObjet(command.getCouleur(), command.getNom()); 
+                command.clear();
                 break; 
         }
     }
@@ -530,13 +526,6 @@ public class Fusion extends javax.swing.JFrame {
         } catch (IvyException ex) {
             Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
-    
-    public void remiseAzero(){
-        command.setObjet(null);
-        command.setCouleur("Black");
-        command.setPosX(-10);
-        command.setPosY(-10);
     }
     
     public void inObject(int x, int y){
