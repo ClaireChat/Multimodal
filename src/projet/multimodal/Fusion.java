@@ -18,12 +18,11 @@ public class Fusion extends javax.swing.JFrame {
     String adresse;
     Ivy bus;
     Point coord;
-    String color, gesture;
     Boolean inForm, isInObj;
-    int X, Y;
-    Object obj;
     HashMap<String, Geste> dicoGestes;
     Geste geste = new Geste();
+    
+    Commande command;
     
     private enum PossibleState{
         IDLE,
@@ -56,15 +55,10 @@ public class Fusion extends javax.swing.JFrame {
         adresse = "localhost:2010";
         bus = new Ivy("Interface Ivy", "", null);
         coord = new Point(0, 0);
-        color = "Black";
         dicoGestes = new HashMap<>();
         initDicoGestes();
+        command = new Commande();
         
-        gesture = "";
-        inForm = false;
-        X = -10;
-        Y = -10;
-        obj = null;
         
         
         //Start bus ivy
@@ -75,41 +69,54 @@ public class Fusion extends javax.swing.JFrame {
             Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
         }
         
-        try {
-//            bus.bindMsg("^Palette:MouseClicked.* x=(.*) y=(.*)", new IvyMessageListener() { 
-//                @Override
-//                public void receive(IvyClient arg0, String[] arg1) {
-//                    try {
-//                        bus.sendMsg("Palette:TesterPoint x="+X+" y="+Y);
-//                        bus.bindMsg("^Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
-//                            @Override
-//                            public void receive(IvyClient ic, String[] strings) {
-//                                inForm = strings[2];
-//                            }
-//                        });
-//                        System.out.print(inForm);
-//                    } catch (IvyException ex) {
-//                        Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
-//                    }
-//                }
-//            });
-            
+        try {            
             bus.bindMsg("^Palette:MousePressed.* x=(.*) y=(.*)", new IvyMessageListener() { //^=tous les message qui commencent par Palette:MousePressed)
                 @Override
                 public void receive(IvyClient arg0, String[] arg1) {
                     try {
+                        isInObj = false;
                         timer.stop();
-                        //bus.sendMsg("Palette:CreerEllipse x=" + 0 + " y=" + 0 + " longueur=100 hauteur=100 couleurFond=Yellow couleurContour=Green");
-                        //inForm = inObject(X, Y);
-                        System.out.println(inForm);
+                        int x = Integer.parseInt(arg1[0]); int y = Integer.parseInt(arg1[1]);
+                        //inObject(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
+                        bus.sendMsg("Palette:TesterPoint x="+x+" y="+y);
+                        bus.bindMsg("Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
+                            @Override
+                            public void receive(IvyClient ic, String[] strings) {
+                                if (strings[2] == "") {
+                                    isInObj = false;
+                                    //System.out.println("DEHORS");
+                                } else {
+                                    isInObj = true;
+                                    //System.out.println("DEDANS");
+                                    try {
+                                        bus.sendMsg("Palette:DemanderInfo nom="+ strings[2]);
+                                        bus.bindMsg("Palette:Info nom=" + strings[2] + "x=(.*) y=(.*) "
+                                                + "longueur=(.*) hauteur=(.*) couleurFond=(.*) "
+                                                + "couleurContour=(.*)", new IvyMessageListener() {
+                                            @Override
+                                            public void receive(IvyClient ic, String[] arg) {
+                                                System.err.println(arg[0] + " " + arg[1] +
+                                                        " " + arg[2] + " " + arg[3] + " " + 
+                                                        arg[4] + " " + arg[5] + " " + arg[6]);
+                                            }
+                                        });
+
+                                    } catch (IvyException ex) {
+                                        Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
+                                }
+                            }
+                        });
+                        System.out.println(isInObj);
                         switch (currentState){
                             case IDLE :
-                                bus.sendMsg("Palette:CreerEllipse x=" + X + " y=" + Y + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
+                                bus.sendMsg("Palette:CreerEllipse x=" + x + " y="
+                                        + y + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
                                 geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
                                 break; 
                             case CREER :        // Créer
                                 // tester si c'est dans un objet
-                                if (inForm == true) {
+                                if (isInObj == true) {
                                     System.err.println("DANS LA FORME");
                                 } else {
                                     System.err.println("VIDE");
@@ -119,8 +126,8 @@ public class Fusion extends javax.swing.JFrame {
                                 break;
                             case DIRE_C :
                                 setState(PossibleState.CREER);
-                                X = Integer.parseInt(arg1[0]);
-                                Y = Integer.parseInt(arg1[1]);
+                                command.setPosX(Integer.parseInt(arg1[0]));
+                                command.setPosY(Integer.parseInt(arg1[1]));
                                 break; 
                             case COLOR_C :
                                 break; 
@@ -133,8 +140,8 @@ public class Fusion extends javax.swing.JFrame {
                                 break; 
                             case DIRE_POS :
                                 setState(PossibleState.DEPL);
-                                X = Integer.parseInt(arg1[0]);
-                                Y = Integer.parseInt(arg1[1]);
+                                command.setPosX(Integer.parseInt(arg1[0]));
+                                command.setPosY(Integer.parseInt(arg1[1]));
                                 break;
                             case CLIC_POS : 
                                 break;
@@ -147,13 +154,13 @@ public class Fusion extends javax.swing.JFrame {
                                 break;
                             case SUPPR :        // Supprimer
                                 setState(PossibleState.DIRE_S);
-                                X = Integer.parseInt(arg1[0]);
-                                Y = Integer.parseInt(arg1[1]);
+                                command.setPosX(Integer.parseInt(arg1[0]));
+                                command.setPosY(Integer.parseInt(arg1[1]));
                                 break;
                             case DIRE_S : 
                                 setState(PossibleState.FIN_S);
-                                X = Integer.parseInt(arg1[0]);
-                                Y = Integer.parseInt(arg1[1]);
+                                command.setPosX(Integer.parseInt(arg1[0]));
+                                command.setPosY(Integer.parseInt(arg1[1]));
                                 break;
                             case CLIC_S :
                                 break;
@@ -395,7 +402,7 @@ public class Fusion extends javax.swing.JFrame {
     });
         
     public void launch (String gesture) {
-        this.gesture = gesture;
+        command.setAction(gesture);
         if ("Cercle".equals(gesture)) {
            setState(PossibleState.CREER);
            timer.start();
@@ -417,12 +424,12 @@ public class Fusion extends javax.swing.JFrame {
                 break; 
             case CREER : 
                 setState(PossibleState.IDLE);
-                if ("Rectangle".equals(gesture)) {
+                if ("Rectangle".equals(command.getAction())) {
                     System.out.println("rect");
-                    creerRect(color, X, Y);
-                } else if ("Cercle".equals(gesture)) {
+                    creerRect(command.getCouleur(), command.getPosX(), command.getPosY());
+                } else if ("Cercle".equals(command.getAction())) {
                     System.out.println("oval");
-                    creerEllipse(color, X, Y);
+                    creerEllipse(command.getCouleur(), command.getPosX(), command.getPosY());
                 }
                 System.out.println(currentState);
                 break;
@@ -440,14 +447,12 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case DEPL :
                 setState(PossibleState.IDLE);
-                if (X < 0 && Y < 0 && obj == null) {
-                    //do A3
-                    deplObjet(color, X, Y); // changer color par un nom
+                if (command.getPosX() < 0 && command.getPosY() < 0 && command.getObjet() == null) {
+                    command.clear();
+                    deplObjet(command.getNom(), command.getPosX(), command.getPosY()); // changer color par un nom
                 } else {
-                    //do A3
-                    X = -10;
-                    Y = -10;
-                    obj = null;
+                    command.clear();
+                    command.setObjet(null);
                 }
                 break; 
             case DIRE_POS :
@@ -468,20 +473,20 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case SUPPR : 
                 setState(PossibleState.IDLE);
-                remiseAzero();
+                command.clear();
                 break;
             case DIRE_S : 
                 setState(PossibleState.IDLE);
-                remiseAzero();
+                command.clear();
                 break;
             case CLIC_S :
                 setState(PossibleState.IDLE);
-                remiseAzero();
+                command.clear();
                 break;
             case FIN_S :    
                 setState(PossibleState.IDLE);
-                supprObjet(color, color);
-                remiseAzero();
+                supprObjet(command.getCouleur(), command.getNom()); 
+                command.clear();
                 break; 
         }
     }
@@ -523,17 +528,10 @@ public class Fusion extends javax.swing.JFrame {
         }
     }
     
-    public void remiseAzero(){
-        obj = null;
-        color = "Black";
-        X = -10;
-        Y = -10;
-    }
-    
-    public Boolean inObject(int X, int Y){
+    public void inObject(int x, int y){
         try {
-            bus.sendMsg("Palette:TesterPoint x="+X+" y="+Y);
-            bus.bindMsg("^Palette:ResultatTesterPoint x=" +X+" y="+ Y +" nom=(.*)", new IvyMessageListener() {
+            bus.sendMsg("Palette:TesterPoint x="+x+" y="+y);
+            bus.bindMsg("Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
                 @Override
                 public void receive(IvyClient ic, String[] strings) {
                     if (strings[2] == "") {
@@ -544,14 +542,12 @@ public class Fusion extends javax.swing.JFrame {
                         System.out.println("DEDANS");
                     }
                 }
-            
             });
         } catch (IvyException ex) {
             Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
         }
         inForm = isInObj;
-        System.err.println(isInObj);
-        return isInObj;
+        System.err.println("Le clic est dans la zone ou pas : " + isInObj);
     }
     
    
