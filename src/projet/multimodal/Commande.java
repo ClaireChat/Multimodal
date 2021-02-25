@@ -15,5 +15,10 @@ public class Commande {
         posY= -1;
         couleur = null;
     }
+    
+    // Completude de la structure
+    public boolean estComplete(){
+        return action!= null&& objet!=null&& posX!=-1 && posY!=-1;
+    }
   
 }
