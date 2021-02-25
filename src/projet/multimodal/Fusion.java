@@ -61,7 +61,6 @@ public class Fusion extends javax.swing.JFrame {
         initDicoGestes();
         
         gesture = "";
-        inForm = false;
         X = -10;
         Y = -10;
         obj = null;
@@ -98,18 +97,34 @@ public class Fusion extends javax.swing.JFrame {
                 @Override
                 public void receive(IvyClient arg0, String[] arg1) {
                     try {
+                        isInObj = false;
                         timer.stop();
+                        int x = Integer.parseInt(arg1[0]); int y = Integer.parseInt(arg1[1]);
                         //bus.sendMsg("Palette:CreerEllipse x=" + 0 + " y=" + 0 + " longueur=100 hauteur=100 couleurFond=Yellow couleurContour=Green");
-                        //inForm = inObject(X, Y);
-                        System.out.println(inForm);
+                        //inObject(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
+                        bus.sendMsg("Palette:TesterPoint x="+x+" y="+y);
+                        bus.bindMsg("Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
+                            @Override
+                            public void receive(IvyClient ic, String[] strings) {
+                                if (strings[2] == "") {
+                                    isInObj = false;
+                                    //System.out.println("DEHORS");
+                                } else {
+                                    isInObj = true;
+                                    //System.out.println("DEDANS");
+                                }
+                            }
+                        });
+                        System.out.println(isInObj);
                         switch (currentState){
                             case IDLE :
-                                bus.sendMsg("Palette:CreerEllipse x=" + X + " y=" + Y + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
+                                bus.sendMsg("Palette:CreerEllipse x=" + X + " y="
+                                        + Y + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
                                 geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
                                 break; 
                             case CREER :        // Créer
                                 // tester si c'est dans un objet
-                                if (inForm == true) {
+                                if (isInObj == true) {
                                     System.err.println("DANS LA FORME");
                                 } else {
                                     System.err.println("VIDE");
@@ -522,10 +537,10 @@ public class Fusion extends javax.swing.JFrame {
         Y = -10;
     }
     
-    public Boolean inObject(int X, int Y){
+    public void inObject(int x, int y){
         try {
-            bus.sendMsg("Palette:TesterPoint x="+X+" y="+Y);
-            bus.bindMsg("^Palette:ResultatTesterPoint x=" +X+" y="+ Y +" nom=(.*)", new IvyMessageListener() {
+            bus.sendMsg("Palette:TesterPoint x="+x+" y="+y);
+            bus.bindMsg("Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
                 @Override
                 public void receive(IvyClient ic, String[] strings) {
                     if (strings[2] == "") {
@@ -536,14 +551,12 @@ public class Fusion extends javax.swing.JFrame {
                         System.out.println("DEDANS");
                     }
                 }
-            
             });
         } catch (IvyException ex) {
             Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
         }
         inForm = isInObj;
-        System.err.println(isInObj);
-        return isInObj;
+        System.err.println("Le clic est dans la zone ou pas : " + isInObj);
     }
     
    
