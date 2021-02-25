@@ -6,7 +6,7 @@ import java.awt.Color;
 public class Commande {
     String action, objet;
     int posX, posY;
-    String couleur;
+    String couleur, nom;
     
     public Commande(){
         action = null;
@@ -14,6 +14,7 @@ public class Commande {
         posX= -1;
         posY= -1;
         couleur = "Black";
+        nom = null;
     }
 
     public String getAction() {
@@ -36,6 +37,10 @@ public class Commande {
         return posY;
     }
 
+    public String getNom() {
+        return nom;
+    }
+
     public void setAction(String action) {
         this.action = action;
     }
@@ -54,5 +59,18 @@ public class Commande {
 
     public void setPosY(int posY) {
         this.posY = posY;
+    }
+
+    public void setNom(String nom) {
+        this.nom = nom;
+    }
+    
+    public void clear(){
+        action = null;
+        objet = null;
+        posX= -1;
+        posY= -1;
+        couleur = "Black";
+        nom = null;
     }
 }
