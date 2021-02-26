@@ -23,7 +23,9 @@ public class Fusion extends javax.swing.JFrame {
     Geste geste = new Geste();
     
     Commande command;
+    // varaible temporaire
     int xTemp, yTemp;
+    String nomTemp, colorTemp;
     
     Boolean sayHere, sayColor, sayThisColor, sayObject;
     
@@ -83,7 +85,7 @@ public class Fusion extends javax.swing.JFrame {
                         bus.bindMsg("Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
                             @Override
                             public void receive(IvyClient ic, String[] strings) {
-                                if (strings[2] == "") {
+                                if ("".equals(strings[2])) {
                                     isInObj = false;
                                     //System.out.println("DEHORS");
                                 } else {
@@ -248,8 +250,9 @@ public class Fusion extends javax.swing.JFrame {
                         case CLIC_C :
                             if (sayHere) {
                                 setState(PossibleState.CREER);
-                                //recupérer x et y cliqué plus tot
                                 
+                                command.setPosX(xTemp);
+                                command.setPosY(yTemp);
                             }
                             break;
                         case DIRE_C :
@@ -258,6 +261,7 @@ public class Fusion extends javax.swing.JFrame {
                             if (sayThisColor) {
                                 setState(PossibleState.CREER);
                                 //recuperer la couleur de l'objet
+                                command.setCouleur(colorTemp);
                             }
                             break; 
                         case THIS_COLOR :
@@ -291,14 +295,15 @@ public class Fusion extends javax.swing.JFrame {
                                 setState(PossibleState.DEPL);
                                 //do A3
                                 command.setCouleur(args[0].split("couleur")[1]);
-                                //command.setObjet(objet);
+                                command.setObjet(nomTemp);
+                                
                             }
                             break;
 
                         case SUPPR : 
                             if (sayObject) {
                                 setState(PossibleState.DIRE_S);
-                                //command.setObjet(l'objet);
+                                command.setObjet(nomTemp);
                             }
                             break;
                         case DIRE_S : 
@@ -306,7 +311,7 @@ public class Fusion extends javax.swing.JFrame {
                         case CLIC_S :
                             if (sayObject) {
                                 setState(PossibleState.FIN_S);
-                                //command.setObjet(l'objet);
+                                command.setObjet(nomTemp);
                             }
                             break;
                         case FIN_S :
