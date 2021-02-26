@@ -13,7 +13,8 @@
 <!-- ============================================================= -->
     <rule id = "flux_vocal" scope = "public">
 		<one-of>
-		   <item> <ruleref uri="#couleur"/><tag>out = "couleur";</tag></item>
+		   <item> <ruleref uri="#couleur"/><tag>out = "couleur" + rules.couleur;</tag></item>
+		   <item> <ruleref uri="#thisCouleur"/><tag>out = "thisCouleur";</tag></item>
 		   <item> <ruleref uri="#objet"/><tag>out = "objet";</tag></item>
 		   <item> <ruleref uri="#position"/><tag>out = "position";</tag></item>
 		</one-of>
@@ -24,9 +25,9 @@
 	 <!-- =========================================== -->
      <rule id="objet">
 			<one-of>
-					<item> cet objet </item>
+					<item> cette objet </item>
 					<item> cette forme </item>
-					<item> cette ellipse</item>
+					<item> cette ellipse </item>
 					<item> ce rectangle </item>
 			</one-of>
      </rule>	
@@ -35,15 +36,16 @@
     <!-- =========================================== -->
      <rule id="couleur">
 			<one-of>
-					<item> rouge </item>
-					<item> orange </item>
-					<item> jaune </item>
-					<item> bleu </item>
-					<item> vert </item>
-					<item> rose </item>
-					<item> violet </item>
-					<item> gris </item>
-					<item> noir </item>
+					<item> Rouge <tag>out= "Red"</tag> </item>
+					<item> Orange </item>
+					<item> Jaune <tag>out= "Yellow"</tag></item>
+					<item> Bleu <tag>out= "Blue"</tag></item>
+					<item> Vert <tag>out= "Green"</tag></item>
+					<item> Rose <tag>out= "Pink"</tag></item>
+					<item> Violet <tag>out= "Purple"</tag></item>
+					<item> Gris <tag>out= "Grey"</tag></item>
+					<item> Noir <tag>out= "Black"</tag></item>
+					<item> de cette couleur </item>
 			</one-of>
      </rule>
 		
@@ -54,7 +56,15 @@
 					<item> ici </item>
 					<item> la </item>
 					<item> a cette position </item>
-					<item> à cet endroit </item>
+					<item> a cette endroit </item>
+			</one-of>
+     </rule>
+	<!-- regle Thiscouleur -->
+    <!-- =========================================== -->
+     <rule id="thisCouleur">
+			<one-of>
+					<item> de cette couleur </item>
+					<item> comme sa </item>
 			</one-of>
      </rule>
 </grammar>
