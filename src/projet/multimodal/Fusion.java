@@ -23,6 +23,9 @@ public class Fusion extends javax.swing.JFrame {
     Geste geste = new Geste();
     
     Commande command;
+    int xTemp, yTemp;
+    
+    Boolean sayHere, sayColor, sayThisColor, sayObject;
     
     private enum PossibleState{
         IDLE,
@@ -58,9 +61,7 @@ public class Fusion extends javax.swing.JFrame {
         dicoGestes = new HashMap<>();
         initDicoGestes();
         command = new Commande();
-        
-        
-        
+                
         //Start bus ivy
         try {
             bus.start(adresse);
@@ -76,9 +77,9 @@ public class Fusion extends javax.swing.JFrame {
                     try {
                         isInObj = false;
                         timer.stop();
-                        int x = Integer.parseInt(arg1[0]); int y = Integer.parseInt(arg1[1]);
+                        xTemp = Integer.parseInt(arg1[0]); yTemp = Integer.parseInt(arg1[1]);
                         //inObject(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
-                        bus.sendMsg("Palette:TesterPoint x="+x+" y="+y);
+                        bus.sendMsg("Palette:TesterPoint x="+xTemp+" y="+yTemp);
                         bus.bindMsg("Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
                             @Override
                             public void receive(IvyClient ic, String[] strings) {
@@ -110,8 +111,8 @@ public class Fusion extends javax.swing.JFrame {
                         System.out.println(isInObj);
                         switch (currentState){
                             case IDLE :
-                                bus.sendMsg("Palette:CreerEllipse x=" + x + " y="
-                                        + y + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
+                                bus.sendMsg("Palette:CreerEllipse x=" + xTemp + " y="
+                                        + yTemp + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
                                 geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
                                 break; 
                             case CREER :        // Créer
@@ -134,7 +135,7 @@ public class Fusion extends javax.swing.JFrame {
                             case THIS_COLOR :
                                 setState(PossibleState.CREER);
                                 // do A5 - object.getColor()
-                                break;
+                                break;  
                             case DEPL :         //Déplacer
                                 //tester si dans l'objet
                                 break; 
@@ -151,7 +152,7 @@ public class Fusion extends javax.swing.JFrame {
                                 setState(PossibleState.OBJ_D);
                                 break;
                             case OBJ_D :
-                                break;
+                                break;  
                             case SUPPR :        // Supprimer
                                 setState(PossibleState.DIRE_S);
                                 command.setPosX(Integer.parseInt(arg1[0]));
@@ -212,43 +213,108 @@ public class Fusion extends javax.swing.JFrame {
             Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
         }
         
+        
         //Vocal
         try {
-            bus.bindMsg("^sra5 Text=(.*) Confidence=.*", new IvyMessageListener() {// abonnement
+            bus.bindMsg("^sra5 Parsed=(.*) Confidence=.* NP=.* Num_A=.*", new IvyMessageListener() {// abonnement
                 public void receive(IvyClient client,String[] args) {
-                    System.out.print(args[0]);
+                    //System.err.println(args[0]);
+                    sayHere = false; sayColor = false; 
+                    sayThisColor = false; sayObject = false;
+                    if ( "position".equals(args[0])) {
+                        sayHere = true;
+                    } else if ("objet".equals(args[0])) {
+                        sayObject = true;
+                    } else if (args[0].contains("couleur")) {
+                        sayColor = true;
+                    } else if ("thisCouleur".equals(args[0])) {
+                        sayThisColor = true;
+                        System.out.println("lalalala");
+                    }
+                    
                     switch (currentState){
                         case IDLE :
                             break; 
-                        case CREER : 
+                        case CREER :
+                            if (sayHere) {
+                                setState(PossibleState.DIRE_C);
+                            } else if (sayThisColor) {
+                                setState(PossibleState.THIS_COLOR);
+                            } else if (sayColor) {
+                                command.setCouleur(args[0].split("couleur")[1]);
+                                System.err.println("Couleur : " +command.getCouleur());
+                            }
                             break;
                         case CLIC_C :
+                            if (sayHere) {
+                                setState(PossibleState.CREER);
+                                //recupérer x et y cliqué plus tot
+                                
+                            }
                             break;
                         case DIRE_C :
                             break; 
                         case COLOR_C :
+                            if (sayThisColor) {
+                                setState(PossibleState.CREER);
+                                //recuperer la couleur de l'objet
+                            }
                             break; 
                         case THIS_COLOR :
                             break;
+
                         case DEPL :
+                            if (sayHere) {
+                                setState(PossibleState.DIRE_POS);
+                            } else if (sayObject) {
+                                setState(PossibleState.DIRE_OBJ);
+                            }
                             break; 
                         case DIRE_POS :
                             break;
                         case CLIC_POS : 
+                            if (sayHere) {
+                                setState(PossibleState.DEPL);
+                                command.setPosX(xTemp);
+                                command.setPosY(yTemp);
+                            }
                             break;
                         case CLIC_OBJ :
+                            if (sayObject) {
+                                setState(PossibleState.OBJ_D);
+                            }
                             break;
                         case DIRE_OBJ :
                             break;
                         case OBJ_D :
+                            if (sayColor) {
+                                setState(PossibleState.DEPL);
+                                //do A3
+                                command.setCouleur(args[0].split("couleur")[1]);
+                                //command.setObjet(objet);
+                            }
                             break;
+
                         case SUPPR : 
+                            if (sayObject) {
+                                setState(PossibleState.DIRE_S);
+                                //command.setObjet(l'objet);
+                            }
                             break;
                         case DIRE_S : 
                             break;
                         case CLIC_S :
+                            if (sayObject) {
+                                setState(PossibleState.FIN_S);
+                                //command.setObjet(l'objet);
+                            }
                             break;
-                        case FIN_S :          
+                        case FIN_S :
+                            if (sayColor) {
+                                setState(PossibleState.IDLE);
+                                supprObjet(command.getCouleur(), command.getNom());
+                                command.clear();
+                            }
                             break;
                     }
                 }
@@ -425,10 +491,8 @@ public class Fusion extends javax.swing.JFrame {
             case CREER : 
                 setState(PossibleState.IDLE);
                 if ("Rectangle".equals(command.getAction())) {
-                    System.out.println("rect");
                     creerRect(command.getCouleur(), command.getPosX(), command.getPosY());
                 } else if ("Cercle".equals(command.getAction())) {
-                    System.out.println("oval");
                     creerEllipse(command.getCouleur(), command.getPosX(), command.getPosY());
                 }
                 System.out.println(currentState);
@@ -550,7 +614,6 @@ public class Fusion extends javax.swing.JFrame {
         System.err.println("Le clic est dans la zone ou pas : " + isInObj);
     }
     
-   
 
 
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
