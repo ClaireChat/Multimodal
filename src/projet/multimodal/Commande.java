@@ -73,4 +73,10 @@ public class Commande {
         couleur = "Black";
         nom = null;
     }
+
+    // Completude de la structure
+    public boolean estComplete(){
+        return action!= null&& objet!=null&& posX!=-1 && posY!=-1;
+    }
+
 }
