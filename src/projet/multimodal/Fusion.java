@@ -20,7 +20,7 @@ public class Fusion extends javax.swing.JFrame {
     Point coord;
     Boolean inForm, isInObj;
     HashMap<String, Geste> dicoGestes;
-    Geste geste = new Geste();
+    Geste geste;
     
     Commande command;
     // varaible temporaire
@@ -61,6 +61,7 @@ public class Fusion extends javax.swing.JFrame {
         bus = new Ivy("Interface Ivy", "", null);
         coord = new Point(0, 0);
         dicoGestes = new HashMap<>();
+        geste = new Geste();
         initDicoGestes();
         command = new Commande();
                 
@@ -93,7 +94,7 @@ public class Fusion extends javax.swing.JFrame {
                                     //System.out.println("DEDANS");
                                     try {
                                         bus.sendMsg("Palette:DemanderInfo nom="+ strings[2]);
-                                        bus.bindMsg("Palette:Info nom=" + strings[2] + "x=(.*) y=(.*) "
+                                        bus.bindMsg("Palette:Info nom=(.*) x=(.*) y=(.*) "
                                                 + "longueur=(.*) hauteur=(.*) couleurFond=(.*) "
                                                 + "couleurContour=(.*)", new IvyMessageListener() {
                                             @Override
@@ -461,6 +462,7 @@ public class Fusion extends javax.swing.JFrame {
 //        System.out.println("croix : " + distanceCroix);
         
         launch(geste);
+        this.jLabel2.setText(geste);
         
         return geste;
     }
@@ -500,6 +502,7 @@ public class Fusion extends javax.swing.JFrame {
                 } else if ("Cercle".equals(command.getAction())) {
                     creerEllipse(command.getCouleur(), command.getPosX(), command.getPosY());
                 }
+                this.jLabel2.setText("");
                 System.out.println(currentState);
                 break;
             case CLIC_C :
@@ -523,6 +526,7 @@ public class Fusion extends javax.swing.JFrame {
                     command.clear();
                     command.setObjet(null);
                 }
+                 this.jLabel2.setText("");
                 break; 
             case DIRE_POS :
                 setState(PossibleState.DEPL);
@@ -543,19 +547,23 @@ public class Fusion extends javax.swing.JFrame {
             case SUPPR : 
                 setState(PossibleState.IDLE);
                 command.clear();
+                this.jLabel2.setText("");
                 break;
             case DIRE_S : 
                 setState(PossibleState.IDLE);
                 command.clear();
+                this.jLabel2.setText("");
                 break;
             case CLIC_S :
                 setState(PossibleState.IDLE);
                 command.clear();
+                this.jLabel2.setText("");
                 break;
             case FIN_S :    
                 setState(PossibleState.IDLE);
                 supprObjet(command.getCouleur(), command.getNom()); 
                 command.clear();
+                 this.jLabel2.setText("");
                 break; 
         }
     }
@@ -624,19 +632,38 @@ public class Fusion extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Passerelle Ivy");
+
+        jLabel1.setText("Actions en cours :");
+
+        jLabel2.setToolTipText("");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(30, 30, 30)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(183, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(36, 36, 36)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(jLabel2))
+                .addContainerGap(251, Short.MAX_VALUE))
         );
+
+        jLabel2.getAccessibleContext().setAccessibleName("jLabel2");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -678,6 +705,8 @@ public class Fusion extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     // End of variables declaration//GEN-END:variables
 }
 
