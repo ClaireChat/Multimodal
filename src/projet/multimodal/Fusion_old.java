@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package projet.multimodal;
 
 import fr.dgac.ivy.Ivy;
@@ -12,7 +7,6 @@ import fr.dgac.ivy.IvyMessageListener;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -20,7 +14,7 @@ import java.util.logging.Logger;
 import javax.swing.Timer;
 
 
-public class Fusion extends javax.swing.JFrame {
+public class Fusion_old extends javax.swing.JFrame {
     String adresse;
     Ivy bus;
     Point coord;
@@ -29,11 +23,11 @@ public class Fusion extends javax.swing.JFrame {
     Geste geste;
     
     Commande command;
-    // variable temporaire
+    // varaible temporaire
     int xTemp, yTemp;
     String nomTemp, colorTemp;
     
-    Boolean sayHere, sayColor, sayThisColor, sayObject;   
+    Boolean sayHere, sayColor, sayThisColor, sayObject;
     
     private enum PossibleState{
         IDLE,
@@ -59,8 +53,8 @@ public class Fusion extends javax.swing.JFrame {
     private void setState(PossibleState aState){
         currentState = aState;
     }
-   
-    public Fusion() {
+    
+    public Fusion_old() {
         initComponents();
         setState(PossibleState.IDLE);
         adresse = "localhost:2010";
@@ -70,13 +64,13 @@ public class Fusion extends javax.swing.JFrame {
         geste = new Geste();
         initDicoGestes();
         command = new Commande();
-        
+                
         //Start bus ivy
         try {
             bus.start(adresse);
             bus.sendMsg("Palette:CreerEllipse x=" + 0 + " y=" + 0 + " longueur=15 hauteur=30 couleurFond=Green couleurContour=Green");
         } catch (IvyException ex) {
-            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         try {            
@@ -85,17 +79,21 @@ public class Fusion extends javax.swing.JFrame {
                 public void receive(IvyClient arg0, String[] arg1) {
                     try {
                         isInObj = false;
+                        timer.stop();
                         xTemp = Integer.parseInt(arg1[0]); yTemp = Integer.parseInt(arg1[1]);
+                        //inObject(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
                         bus.sendMsg("Palette:TesterPoint x="+xTemp+" y="+yTemp);
                         bus.bindMsg("Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
                             @Override
                             public void receive(IvyClient ic, String[] strings) {
                                 if ("".equals(strings[2])) {
                                     isInObj = false;
+                                    //System.out.println("DEHORS");
                                 } else {
                                     isInObj = true;
+                                    //System.out.println("DEDANS");
                                     try {
-                                        bus.sendMsg("Palette:DemanderInfo nom="+ strings[2]);  
+                                        bus.sendMsg("Palette:DemanderInfo nom="+ strings[2]);
                                         bus.bindMsg("Palette:Info nom=(.*) x=(.*) y=(.*) "
                                                 + "longueur=(.*) hauteur=(.*) couleurFond=(.*) "
                                                 + "couleurContour=(.*)", new IvyMessageListener() {
@@ -104,17 +102,16 @@ public class Fusion extends javax.swing.JFrame {
                                                 System.err.println(arg[0] + " " + arg[1] +
                                                         " " + arg[2] + " " + arg[3] + " " + 
                                                         arg[4] + " " + arg[5] + " " + arg[6]);
-                                                nomTemp = arg[0];
-                                                System.out.println("--------- " + nomTemp);
-                                                colorTemp = arg[5];
                                             }
                                         });
+
                                     } catch (IvyException ex) {
-                                        Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+                                        Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
                                     }
                                 }
                             }
                         });
+                        System.out.println(isInObj);
                         switch (currentState){
                             case IDLE :
                                 bus.sendMsg("Palette:CreerEllipse x=" + xTemp + " y="
@@ -146,7 +143,6 @@ public class Fusion extends javax.swing.JFrame {
                                 //tester si dans l'objet
                                 break; 
                             case DIRE_POS :
-                                System.out.println("clic_pos");
                                 setState(PossibleState.DEPL);
                                 command.setPosX(Integer.parseInt(arg1[0]));
                                 command.setPosY(Integer.parseInt(arg1[1]));
@@ -157,7 +153,6 @@ public class Fusion extends javax.swing.JFrame {
                                 break;
                             case DIRE_OBJ :
                                 setState(PossibleState.OBJ_D);
-                                System.out.println("clic_obj");
                                 break;
                             case OBJ_D :
                                 break;  
@@ -178,7 +173,7 @@ public class Fusion extends javax.swing.JFrame {
                         }
                         timer.start();
                     } catch (IvyException ex) {
-                        Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             });
@@ -195,9 +190,10 @@ public class Fusion extends javax.swing.JFrame {
                                 compareGeste();
                                 geste = new Geste(); 
                                 System.out.println(currentState);
+                                //bus.sendMsg("Palette:SupprimerTout");
                         }
                     } catch (IvyException ex) {
-                        Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             });
@@ -212,12 +208,12 @@ public class Fusion extends javax.swing.JFrame {
                                 geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
                             }
                         } catch (IvyException ex) {
-                            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+                            Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 }
             });
         } catch (IvyException ex) {
-            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
         }
         
         
@@ -225,6 +221,7 @@ public class Fusion extends javax.swing.JFrame {
         try {
             bus.bindMsg("^sra5 Parsed=(.*) Confidence=.* NP=.* Num_A=.*", new IvyMessageListener() {// abonnement
                 public void receive(IvyClient client,String[] args) {
+                    //System.err.println(args[0]);
                     sayHere = false; sayColor = false; 
                     sayThisColor = false; sayObject = false;
                     if ( "position".equals(args[0])) {
@@ -235,8 +232,9 @@ public class Fusion extends javax.swing.JFrame {
                         sayColor = true;
                     } else if ("thisCouleur".equals(args[0])) {
                         sayThisColor = true;
+                        System.out.println("lalalala");
                     }
-                    System.out.println("vocal + état : " + currentState);
+                    
                     switch (currentState){
                         case IDLE :
                             break; 
@@ -247,11 +245,13 @@ public class Fusion extends javax.swing.JFrame {
                                 setState(PossibleState.THIS_COLOR);
                             } else if (sayColor) {
                                 command.setCouleur(args[0].split("couleur")[1]);
+                                System.err.println("Couleur : " +command.getCouleur());
                             }
                             break;
                         case CLIC_C :
                             if (sayHere) {
                                 setState(PossibleState.CREER);
+                                
                                 command.setPosX(xTemp);
                                 command.setPosY(yTemp);
                             }
@@ -261,18 +261,17 @@ public class Fusion extends javax.swing.JFrame {
                         case COLOR_C :
                             if (sayThisColor) {
                                 setState(PossibleState.CREER);
-                                //recuperer la couleur de l'objet via info
+                                //recuperer la couleur de l'objet
                                 command.setCouleur(colorTemp);
                             }
                             break; 
                         case THIS_COLOR :
                             break;
+
                         case DEPL :
                             if (sayHere) {
-                                System.out.println("sayHere");
                                 setState(PossibleState.DIRE_POS);
                             } else if (sayObject) {
-                                System.out.println("sayObject");
                                 setState(PossibleState.DIRE_OBJ);
                             }
                             break; 
@@ -298,13 +297,14 @@ public class Fusion extends javax.swing.JFrame {
                                 //do A3
                                 command.setCouleur(args[0].split("couleur")[1]);
                                 command.setNom(nomTemp);
+                                
                             }
                             break;
 
                         case SUPPR : 
                             if (sayObject) {
                                 setState(PossibleState.DIRE_S);
-                                command.setNom(nomTemp); // recup le nom via info
+                                command.setNom(nomTemp);
                             }
                             break;
                         case DIRE_S : 
@@ -312,7 +312,7 @@ public class Fusion extends javax.swing.JFrame {
                         case CLIC_S :
                             if (sayObject) {
                                 setState(PossibleState.FIN_S);
-                                command.setNom(nomTemp); // recup le nom via info
+                                command.setNom(nomTemp);
                             }
                             break;
                         case FIN_S :
@@ -323,21 +323,16 @@ public class Fusion extends javax.swing.JFrame {
                             }
                             break;
                     }
-                    timer.start();
                 }
             });
         } catch (IvyException ex) {
-            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
         }
         pack();
         setVisible(true);
         
     }
     
-    public void restartTimer() {
-        timer.stop();
-        timer.start();
-    }
     /*
     * Fonction permettant d'intialiser le dictionnaiire des gestes
     */
@@ -393,7 +388,6 @@ public class Fusion extends javax.swing.JFrame {
         trait.normalize();
         croix.normalize();
         cercle.normalize();
-  
         
         // Ajout des gestes normalisés au dictionnaire
         this.dicoGestes.put("Rectangle", rect);
@@ -402,7 +396,7 @@ public class Fusion extends javax.swing.JFrame {
         this.dicoGestes.put("Supprimer", croix);
     }
     
-        /*
+    /*
     * Fonction permettant de comparer le geste réalisé sur la palette avec le 
     * dictionnaire des gestes
     * Retourne le geste le plus proche de celui réalisé
@@ -473,7 +467,7 @@ public class Fusion extends javax.swing.JFrame {
         return geste;
     }
     
-    Timer timer = new Timer(5000, new ActionListener() {
+    Timer timer = new Timer(3000, new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             timerStartActionPerformed(e);
@@ -509,7 +503,7 @@ public class Fusion extends javax.swing.JFrame {
                     creerEllipse(command.getCouleur(), command.getPosX(), command.getPosY());
                 }
                 this.jLabel2.setText("");
-                timer.stop();
+                System.out.println(currentState);
                 break;
             case CLIC_C :
                 setState(PossibleState.CREER);
@@ -525,15 +519,14 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case DEPL :
                 setState(PossibleState.IDLE);
-                System.out.println("Nom : " + command.getNom() + " x : " + command.getPosX() + " y : " + command.getPosY());
-                if (command.getPosX() >= 0 && command.getPosY() >= 0 && command.getNom() != null) {
-                    deplObjet(command.getNom(), command.getPosX(), command.getPosY());
+                if (command.getPosX() < 0 && command.getPosY() < 0 && command.getNom() == null) {
                     command.clear();
+                    deplObjet(command.getNom(), command.getPosX(), command.getPosY()); // changer color par un nom
                 } else {
-                    command.clear();   
+                    command.clear();
+                    command.setNom(null);
                 }
                  this.jLabel2.setText("");
-                 timer.stop();
                 break; 
             case DIRE_POS :
                 setState(PossibleState.DEPL);
@@ -549,35 +542,28 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case OBJ_D :
                 setState(PossibleState.DEPL);
-                command.setNom(nomTemp);
-                command.setCouleur(colorTemp);
-                System.out.println("Nom : " + command.getNom());
+                // do A4
                 break;
             case SUPPR : 
-                System.out.println("SUPPR");
                 setState(PossibleState.IDLE);
                 command.clear();
                 this.jLabel2.setText("");
-                timer.stop();
                 break;
             case DIRE_S : 
                 setState(PossibleState.IDLE);
                 command.clear();
                 this.jLabel2.setText("");
-                timer.stop();
                 break;
             case CLIC_S :
                 setState(PossibleState.IDLE);
                 command.clear();
                 this.jLabel2.setText("");
-                timer.stop();
                 break;
             case FIN_S :    
                 setState(PossibleState.IDLE);
                 supprObjet(command.getCouleur(), command.getNom()); 
                 command.clear();
                  this.jLabel2.setText("");
-                 timer.stop();
                 break; 
         }
     }
@@ -587,7 +573,7 @@ public class Fusion extends javax.swing.JFrame {
             bus.sendMsg("Palette:CreerRectangle x=" + x + " y=" + y + " longueur=100 "
                     + "hauteur=50 couleurFond=" + color + " couleurContour=" + color);
         } catch (IvyException ex) {
-            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
@@ -597,7 +583,7 @@ public class Fusion extends javax.swing.JFrame {
             bus.sendMsg("Palette:CreerEllipse x=" + x + " y=" + y + " longueur=50 "
                     + "hauteur=50 couleurFond=" + color + " couleurContour=" + color);
         } catch (IvyException ex) {
-            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
         }
 
     }
@@ -606,17 +592,16 @@ public class Fusion extends javax.swing.JFrame {
         try {
             bus.sendMsg("Palette:SupprimerObjet nom=" + nom);
         } catch (IvyException ex) {
-            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
     public void deplObjet(String nom, int x, int y){
         try {
-            System.out.println("DEPLACE Nom : " + nom + " X : " + x + " Y : " + y);
             bus.sendMsg("Palette:DeplacerObjetAbsolu nom=" + nom + " x=" + x +
                     " y=" + y);
         } catch (IvyException ex) {
-            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
@@ -636,19 +621,14 @@ public class Fusion extends javax.swing.JFrame {
                 }
             });
         } catch (IvyException ex) {
-            Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(Fusion_old.class.getName()).log(Level.SEVERE, null, ex);
         }
         inForm = isInObj;
         System.err.println("Le clic est dans la zone ou pas : " + isInObj);
     }
     
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
+
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -656,29 +636,34 @@ public class Fusion extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Passerelle Ivy");
 
-        jLabel1.setText("Action en cours :");
+        jLabel1.setText("Actions en cours :");
+
+        jLabel2.setToolTipText("");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(37, 37, 37)
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(30, 30, 30)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 113, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(172, Short.MAX_VALUE))
+                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 68, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(183, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(28, 28, 28)
+                .addGap(36, 36, 36)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel1)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(259, Short.MAX_VALUE))
+                    .addComponent(jLabel2))
+                .addContainerGap(251, Short.MAX_VALUE))
         );
+
+        jLabel2.getAccessibleContext().setAccessibleName("jLabel2");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -700,20 +685,27 @@ public class Fusion extends javax.swing.JFrame {
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(Fusion.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Fusion_old.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(Fusion.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Fusion_old.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(Fusion.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Fusion_old.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(Fusion.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(Fusion_old.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Fusion().setVisible(true);
+                new Fusion_old().setVisible(true);
             }
         });
     }
@@ -724,7 +716,7 @@ public class Fusion extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 }
 
-///-----------------------------  TEMPLATE ------------------------------------
+////-----------------------------  TEMPLATE ------------------------------------
 //switch (currentState){
 //            case IDLE :
 //                break; 

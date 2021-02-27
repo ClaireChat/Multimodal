@@ -4,13 +4,12 @@ import java.awt.Color;
 
 
 public class Commande {
-    String action, objet;
+    String action;
     int posX, posY;
     String couleur, nom;
     
     public Commande(){
         action = null;
-        objet = null;
         posX= -1;
         posY= -1;
         couleur = "Black";
@@ -23,10 +22,6 @@ public class Commande {
 
     public String getCouleur() {
         return couleur;
-    }
-
-    public String getObjet() {
-        return objet;
     }
 
     public int getPosX() {
@@ -49,10 +44,6 @@ public class Commande {
         this.couleur = couleur;
     }
 
-    public void setObjet(String objet) {
-        this.objet = objet;
-    }
-
     public void setPosX(int posX) {
         this.posX = posX;
     }
@@ -67,7 +58,6 @@ public class Commande {
     
     public void clear(){
         action = null;
-        objet = null;
         posX= -1;
         posY= -1;
         couleur = "Black";
@@ -76,7 +66,7 @@ public class Commande {
 
     // Completude de la structure
     public boolean estComplete(){
-        return action!= null&& objet!=null&& posX!=-1 && posY!=-1;
+        return action!= null&& nom!=null&& posX!=-1 && posY!=-1;
     }
 
 }
