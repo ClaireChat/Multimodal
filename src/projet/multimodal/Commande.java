@@ -1,7 +1,5 @@
 package projet.multimodal;
 
-import java.awt.Color;
-
 
 public class Commande {
     String action;
@@ -13,7 +11,7 @@ public class Commande {
         posX= -1;
         posY= -1;
         couleur = "Black";
-        nom = null;
+        nom = null; //nom de l'objet (ex: R123)
     }
 
     public String getAction() {

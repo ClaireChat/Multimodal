@@ -108,9 +108,8 @@ public class Fusion extends javax.swing.JFrame {
                                                         arg[4] + " " + arg[5] + " " + arg[6]);
                                                 nomTemp = arg[0];
                                                 colorTemp = arg[5];
-                                                if("Supprimer".equals(command.action)) {
+                                                if("Supprimer".equals(command.action) || "Deplacer".equals(command.action)) {
                                                     listeTemp.put(arg[5], arg[0]);
-                                                    System.out.println(arg[5] + " " +  arg[0]);
                                                 }
                                             }
                                         });
@@ -152,8 +151,10 @@ public class Fusion extends javax.swing.JFrame {
                                 break; 
                             case DIRE_POS :
                                 setState(PossibleState.DEPL);
+                                System.out.println("clicHere  X : " + arg1[0] + "Y : " + arg1[1]);
                                 command.setPosX(Integer.parseInt(arg1[0]));
                                 command.setPosY(Integer.parseInt(arg1[1]));
+                                labelPosition1.setText(" x : " + command.posX + " y : " + command.posY);
                                 break;
                             case CLIC_POS : 
                                 break;
@@ -161,6 +162,7 @@ public class Fusion extends javax.swing.JFrame {
                                 break;
                             case DIRE_OBJ :
                                 setState(PossibleState.OBJ_D);
+                                System.out.println("clicObject");
                                 break;
                             case OBJ_D :
                                 break;  
@@ -228,12 +230,14 @@ public class Fusion extends javax.swing.JFrame {
                 public void receive(IvyClient client,String[] args) {
                     sayHere = false; sayColor = false; 
                     sayThisColor = false; sayObject = false;
+                    String couleur = null;
                     if ( "position".equals(args[0])) {
                         sayHere = true;
                     } else if ("objet".equals(args[0])) {
                         sayObject = true;
                     } else if (args[0].contains("couleur")) {
                         sayColor = true;
+                        couleur = args[0].split("couleur")[1];
                     } else if ("thisCouleur".equals(args[0])) {
                         sayThisColor = true;
                     }
@@ -247,7 +251,7 @@ public class Fusion extends javax.swing.JFrame {
                             } else if (sayThisColor) {
                                 setState(PossibleState.THIS_COLOR);
                             } else if (sayColor) {
-                                command.setCouleur(args[0].split("couleur")[1]);
+                                command.setCouleur(couleur);
                             }
                             break;
                         case CLIC_C :
@@ -297,8 +301,11 @@ public class Fusion extends javax.swing.JFrame {
                             if (sayColor) {
                                 setState(PossibleState.DEPL);
                                 //do A3
+                                command.setNom(listeTemp.get(couleur.toLowerCase()));
                                 command.setCouleur(args[0].split("couleur")[1]);
                                 command.setNom(nomTemp);
+                                labelCouleur1.setText(command.couleur);
+                                labelObjet1.setText(command.action);
                             }
                             break;
 
@@ -316,7 +323,6 @@ public class Fusion extends javax.swing.JFrame {
                             break;
                         case FIN_S :
                             if (sayColor) {
-                                String couleur = args[0].split("couleur")[1];
                                 setState(PossibleState.IDLE);
                                 command.setNom(listeTemp.get(couleur.toLowerCase()));
                                 command.setCouleur(args[0].split("couleur")[1]);
@@ -464,19 +470,27 @@ public class Fusion extends javax.swing.JFrame {
         System.out.println("ETAT : " + geste);
         
         launch(geste);
-        this.jLabel2.setText(geste);
-        resetVarTemp();
+        this.labelAction1.setText(geste);
+        clearVarTemp();
         command.action = geste;
         
         return geste;
     }
     
-    public void resetVarTemp() {
+    public void clearVarTemp() {
         listeTemp.clear();
         xTemp = -1;
         yTemp = -1;
         nomTemp = null;
         colorTemp = null;
+    }
+    
+    public void clearLabels() {
+        this.labelAction1.setText("null");
+        this.labelCouleur1.setText("null");
+        this.labelPosition1.setText("null");
+        this.labelObjet1.setText("null");
+        
     }
     
     Timer timer = new Timer(5000, new ActionListener() {
@@ -514,7 +528,7 @@ public class Fusion extends javax.swing.JFrame {
                 } else if ("Cercle".equals(command.getAction())) {
                     creerEllipse(command.getCouleur(), command.getPosX(), command.getPosY());
                 }
-                this.jLabel2.setText("");
+                clearLabels();
                 timer.stop();
                 break;
             case CLIC_C :
@@ -538,7 +552,7 @@ public class Fusion extends javax.swing.JFrame {
                 } else {
                     command.clear();   
                 }
-                 this.jLabel2.setText("");
+                 clearLabels();
                  timer.stop();
                 break; 
             case DIRE_POS :
@@ -555,25 +569,27 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case OBJ_D :
                 setState(PossibleState.DEPL);
+                System.out.println("NomTemp : " + nomTemp);
                 command.setNom(nomTemp);
                 command.setCouleur(colorTemp);
+                this.labelObjet1.setText(command.nom);
                 break;
             case SUPPR : 
                 setState(PossibleState.IDLE);
                 command.clear();
-                this.jLabel2.setText("");
+                clearLabels();
                 timer.stop();
                 break;
             case DIRE_S : 
                 setState(PossibleState.IDLE);
                 command.clear();
-                this.jLabel2.setText("");
+                clearLabels();
                 timer.stop();
                 break;
             case CLIC_S :
                 setState(PossibleState.IDLE);
                 command.clear();
-                this.jLabel2.setText("");
+                clearLabels();
                 timer.stop();
                 break;
             case FIN_S :
@@ -581,7 +597,7 @@ public class Fusion extends javax.swing.JFrame {
                 command.setNom(nomTemp);
                 supprObjet(command.getCouleur(), command.getNom()); 
                 command.clear();
-                this.jLabel2.setText("");
+                clearLabels();
                 timer.stop();
                 break; 
         }
@@ -659,12 +675,32 @@ public class Fusion extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
+        labelAction = new javax.swing.JLabel();
+        labelAction1 = new javax.swing.JLabel();
+        labelObjet = new javax.swing.JLabel();
+        labelPosition = new javax.swing.JLabel();
+        labelCouleur = new javax.swing.JLabel();
+        labelObjet1 = new javax.swing.JLabel();
+        labelPosition1 = new javax.swing.JLabel();
+        labelCouleur1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jLabel1.setText("Action en cours :");
+        labelAction.setText("Action en cours :");
+
+        labelAction1.setText("null");
+
+        labelObjet.setText("Objet :");
+
+        labelPosition.setText("Position :");
+
+        labelCouleur.setText("Couleur : ");
+
+        labelObjet1.setText("null");
+
+        labelPosition1.setText("null");
+
+        labelCouleur1.setText("null");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -672,9 +708,23 @@ public class Fusion extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(37, 37, 37)
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(labelAction, javax.swing.GroupLayout.PREFERRED_SIZE, 92, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(labelAction1, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(labelObjet, javax.swing.GroupLayout.PREFERRED_SIZE, 52, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(labelPosition, javax.swing.GroupLayout.PREFERRED_SIZE, 65, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(labelCouleur, javax.swing.GroupLayout.PREFERRED_SIZE, 73, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(labelObjet1, javax.swing.GroupLayout.PREFERRED_SIZE, 69, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(labelPosition1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(labelCouleur1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap(172, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
@@ -682,10 +732,24 @@ public class Fusion extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGap(28, 28, 28)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(259, Short.MAX_VALUE))
+                    .addComponent(labelAction)
+                    .addComponent(labelAction1, javax.swing.GroupLayout.PREFERRED_SIZE, 13, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(labelObjet)
+                    .addComponent(labelObjet1))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(labelPosition)
+                    .addComponent(labelPosition1))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(labelCouleur)
+                    .addComponent(labelCouleur1))
+                .addContainerGap(166, Short.MAX_VALUE))
         );
+
+        labelAction.getAccessibleContext().setAccessibleName("jLabel1");
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -726,8 +790,14 @@ public class Fusion extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel labelAction;
+    private javax.swing.JLabel labelAction1;
+    private javax.swing.JLabel labelCouleur;
+    private javax.swing.JLabel labelCouleur1;
+    private javax.swing.JLabel labelObjet;
+    private javax.swing.JLabel labelObjet1;
+    private javax.swing.JLabel labelPosition;
+    private javax.swing.JLabel labelPosition1;
     // End of variables declaration//GEN-END:variables
 }
 
