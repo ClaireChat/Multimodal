@@ -798,39 +798,3 @@ public class Fusion extends javax.swing.JFrame {
     private javax.swing.JLabel labelPosition1;
     // End of variables declaration//GEN-END:variables
 }
-
-///-----------------------------  TEMPLATE ------------------------------------
-//switch (currentState){
-//            case IDLE :
-//                break; 
-//            case CREER : 
-//                break;
-//            case CLIC_C :
-//                break;
-//            case DIRE_C :
-//                break; 
-//            case COLOR_C :
-//                break; 
-//            case THIS_COLOR :
-//                break;
-//            case DEPL :
-//                break; 
-//            case DIRE_POS :
-//                break;
-//            case CLIC_POS : 
-//                break;
-//            case CLIC_OBJ :
-//                break;
-//            case DIRE_OBJ :
-//                break;
-//            case OBJ_D :
-//                break;
-//            case SUPPR : 
-//                break;
-//            case DIRE_S : 
-//                break;
-//            case CLIC_S :
-//                break;
-//            case FIN_S :          
-//                break;
-//        }

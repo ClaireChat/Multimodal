@@ -29,6 +29,7 @@
 					<item> cette forme </item>
 					<item> cette ellipse </item>
 					<item> ce rectangle </item>
+                                        <item> ce rond </item>
 			</one-of>
      </rule>	
 	
@@ -45,7 +46,6 @@
 					<item> Violet <tag>out= "Purple"</tag></item>
 					<item> Gris <tag>out= "Grey"</tag></item>
 					<item> Noir <tag>out= "Black"</tag></item>
-					<item> de cette couleur </item>
 			</one-of>
      </rule>
 		
