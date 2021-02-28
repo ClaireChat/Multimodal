@@ -2,9 +2,9 @@ package projet.multimodal;
 
 
 public class Commande {
-    String action;
-    int posX, posY;
-    String couleur, nom;
+    private String action;
+    private int posX, posY;
+    private String couleur, nom;
     
     public Commande(){
         action = null;

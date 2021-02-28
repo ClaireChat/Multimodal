@@ -14,6 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.Timer;
@@ -91,7 +92,6 @@ public class Fusion extends javax.swing.JFrame {
                         bus.bindMsg("Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
                             @Override
                             public void receive(IvyClient ic, String[] strings) {
-                                System.out.println("TEST_isInObj : "+ strings[2]);
                                 if ("".equals(strings[2])) {
                                     isInObj = false;
                                 } else {
@@ -108,7 +108,7 @@ public class Fusion extends javax.swing.JFrame {
                                                         arg[4] + " " + arg[5] + " " + arg[6]);
                                                 nomTemp = arg[0];
                                                 colorTemp = arg[5];
-                                                if("Supprimer".equals(command.action) || "Deplacer".equals(command.action)) {
+                                                if("Supprimer".equals(command.getAction()) || "Deplacer".equals(command.getAction())) {
                                                     listeTemp.put(arg[5], arg[0]);
                                                 }
                                             }
@@ -125,12 +125,9 @@ public class Fusion extends javax.swing.JFrame {
                                         + yTemp + " longueur=8 hauteur=8 couleurFond=Green couleurContour=Green");
                                 geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
                                 break; 
-                            case CREER :        // Créer
-                                // tester si c'est dans un objet
+                            case CREER :
                                 if (isInObj == true) {
-                                    System.err.println("DANS LA FORME");
-                                } else {
-                                    System.err.println("VIDE");
+                                    setState(PossibleState.COLOR_C);
                                 }
                                 break;
                             case CLIC_C :
@@ -139,22 +136,29 @@ public class Fusion extends javax.swing.JFrame {
                                 setState(PossibleState.CREER);
                                 command.setPosX(Integer.parseInt(arg1[0]));
                                 command.setPosY(Integer.parseInt(arg1[1]));
+                                labelPosition1.setText("x : " + command.getPosX() +  " y : " + command.getPosY());
                                 break; 
                             case COLOR_C :
                                 break; 
                             case THIS_COLOR :
                                 setState(PossibleState.CREER);
-                                // do A5 - object.getColor()
+                                command.setCouleur(colorTemp);
+                                labelCouleur1.setText(command.getCouleur());
                                 break;  
-                            case DEPL :         //Déplacer
-                                //tester si dans l'objet
+  
+                            case DEPL :
+                                if(isInObj) {
+                                   setState(PossibleState.CLIC_OBJ);  
+                                }
+                                else {
+                                  setState(PossibleState.CLIC_POS);  
+                                }
                                 break; 
                             case DIRE_POS :
                                 setState(PossibleState.DEPL);
-                                System.out.println("clicHere  X : " + arg1[0] + "Y : " + arg1[1]);
                                 command.setPosX(Integer.parseInt(arg1[0]));
                                 command.setPosY(Integer.parseInt(arg1[1]));
-                                labelPosition1.setText(" x : " + command.posX + " y : " + command.posY);
+                                labelPosition1.setText(" x : " + command.getPosX() + " y : " + command.getPosY());
                                 break;
                             case CLIC_POS : 
                                 break;
@@ -162,7 +166,6 @@ public class Fusion extends javax.swing.JFrame {
                                 break;
                             case DIRE_OBJ :
                                 setState(PossibleState.OBJ_D);
-                                System.out.println("clicObject");
                                 break;
                             case OBJ_D :
                                 break;  
@@ -241,7 +244,7 @@ public class Fusion extends javax.swing.JFrame {
                     } else if ("thisCouleur".equals(args[0])) {
                         sayThisColor = true;
                     }
-                    //System.out.println("vocal + état : " + currentState);
+
                     switch (currentState){
                         case IDLE :
                             break; 
@@ -259,6 +262,7 @@ public class Fusion extends javax.swing.JFrame {
                                 setState(PossibleState.CREER);
                                 command.setPosX(xTemp);
                                 command.setPosY(yTemp);
+                                labelPosition1.setText("x : " + command.getPosX() +  " y : " + command.getPosY());
                             }
                             break;
                         case DIRE_C :
@@ -266,18 +270,16 @@ public class Fusion extends javax.swing.JFrame {
                         case COLOR_C :
                             if (sayThisColor) {
                                 setState(PossibleState.CREER);
-                                //recuperer la couleur de l'objet via info
                                 command.setCouleur(colorTemp);
+                                labelCouleur1.setText(command.getCouleur());
                             }
                             break; 
                         case THIS_COLOR :
                             break;
                         case DEPL :
                             if (sayHere) {
-                                System.out.println("sayHere");
                                 setState(PossibleState.DIRE_POS);
                             } else if (sayObject) {
-                                System.out.println("sayObject");
                                 setState(PossibleState.DIRE_OBJ);
                             }
                             break; 
@@ -288,6 +290,7 @@ public class Fusion extends javax.swing.JFrame {
                                 setState(PossibleState.DEPL);
                                 command.setPosX(xTemp);
                                 command.setPosY(yTemp);
+                                labelPosition1.setText("x : " + xTemp + " y : " + yTemp);
                             }
                             break;
                         case CLIC_OBJ :
@@ -300,12 +303,10 @@ public class Fusion extends javax.swing.JFrame {
                         case OBJ_D :
                             if (sayColor) {
                                 setState(PossibleState.DEPL);
-                                //do A3
                                 command.setNom(listeTemp.get(couleur.toLowerCase()));
                                 command.setCouleur(args[0].split("couleur")[1]);
-                                command.setNom(nomTemp);
-                                labelCouleur1.setText(command.couleur);
-                                labelObjet1.setText(command.action);
+                                labelCouleur1.setText(command.getCouleur());
+                                labelObjet1.setText(command.getNom());
                             }
                             break;
 
@@ -326,7 +327,9 @@ public class Fusion extends javax.swing.JFrame {
                                 setState(PossibleState.IDLE);
                                 command.setNom(listeTemp.get(couleur.toLowerCase()));
                                 command.setCouleur(args[0].split("couleur")[1]);
-                                supprObjet(command.getCouleur(), command.getNom());
+                                labelCouleur1.setText(command.getCouleur());
+                                labelObjet1.setText(command.getNom());
+                                supprObjet(command.getNom());
                                 command.clear();
                             }
                             break;
@@ -465,14 +468,11 @@ public class Fusion extends javax.swing.JFrame {
                 geste = map.getKey();
             }
         }
-        
-        System.out.println("----------------------");
-        System.out.println("ETAT : " + geste);
-        
+
         launch(geste);
         this.labelAction1.setText(geste);
         clearVarTemp();
-        command.action = geste;
+        command.setAction(geste);
         
         return geste;
     }
@@ -492,6 +492,7 @@ public class Fusion extends javax.swing.JFrame {
         this.labelObjet1.setText("null");
         
     }
+    
     
     Timer timer = new Timer(5000, new ActionListener() {
         @Override
@@ -542,10 +543,10 @@ public class Fusion extends javax.swing.JFrame {
                 break; 
             case THIS_COLOR :
                 setState(PossibleState.CREER);
+                command.setCouleur(colorTemp);
                 break;
             case DEPL :
                 setState(PossibleState.IDLE);
-                System.out.println("Nom : " + command.getNom() + " x : " + command.getPosX() + " y : " + command.getPosY());
                 if (command.getPosX() >= 0 && command.getPosY() >= 0 && command.getNom() != null) {
                     deplObjet(command.getNom(), command.getPosX(), command.getPosY());
                     command.clear();
@@ -569,10 +570,9 @@ public class Fusion extends javax.swing.JFrame {
                 break;
             case OBJ_D :
                 setState(PossibleState.DEPL);
-                System.out.println("NomTemp : " + nomTemp);
                 command.setNom(nomTemp);
                 command.setCouleur(colorTemp);
-                this.labelObjet1.setText(command.nom);
+                this.labelObjet1.setText(command.getNom());
                 break;
             case SUPPR : 
                 setState(PossibleState.IDLE);
@@ -595,7 +595,7 @@ public class Fusion extends javax.swing.JFrame {
             case FIN_S :
                 setState(PossibleState.IDLE);
                 command.setNom(nomTemp);
-                supprObjet(command.getCouleur(), command.getNom()); 
+                supprObjet(command.getNom()); 
                 command.clear();
                 clearLabels();
                 timer.stop();
@@ -623,10 +623,8 @@ public class Fusion extends javax.swing.JFrame {
 
     }
     
-    public void supprObjet(String color, String nom){
+    public void supprObjet(String nom){
         try {
-            //si colorTemp != null, verifier que colorTemp = color
-            System.out.println("Supprimer obj : " + nom);
             bus.sendMsg("Palette:SupprimerObjet nom=" + nom);
         } catch (IvyException ex) {
             Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
@@ -635,7 +633,6 @@ public class Fusion extends javax.swing.JFrame {
     
     public void deplObjet(String nom, int x, int y){
         try {
-            System.out.println("DEPLACE Nom : " + nom + " X : " + x + " Y : " + y);
             bus.sendMsg("Palette:DeplacerObjetAbsolu nom=" + nom + " x=" + x +
                     " y=" + y);
         } catch (IvyException ex) {
@@ -649,12 +646,10 @@ public class Fusion extends javax.swing.JFrame {
             bus.bindMsg("Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
                 @Override
                 public void receive(IvyClient ic, String[] strings) {
-                    if (strings[2] == "") {
+                    if ("".equals(strings[2])) {
                         isInObj = false;
-                        System.out.println("DEHORS");
                     } else {
                         isInObj = true;
-                        System.out.println("DEDANS");
                     }
                 }
             });
@@ -779,6 +774,9 @@ public class Fusion extends javax.swing.JFrame {
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
             java.util.logging.Logger.getLogger(Fusion.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        //</editor-fold>
+        //</editor-fold>
         //</editor-fold>
 
         /* Create and display the form */
