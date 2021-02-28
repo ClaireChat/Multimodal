@@ -12,7 +12,6 @@ import fr.dgac.ivy.IvyMessageListener;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.Point2D;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -32,6 +31,7 @@ public class Fusion extends javax.swing.JFrame {
     // variable temporaire
     int xTemp, yTemp;
     String nomTemp, colorTemp;
+    HashMap<String, String> listeTemp;
     
     Boolean sayHere, sayColor, sayThisColor, sayObject;   
     
@@ -67,6 +67,7 @@ public class Fusion extends javax.swing.JFrame {
         bus = new Ivy("Interface Ivy", "", null);
         coord = new Point(0, 0);
         dicoGestes = new HashMap<>();
+        listeTemp = new HashMap<>();;
         geste = new Geste();
         initDicoGestes();
         command = new Commande();
@@ -90,6 +91,7 @@ public class Fusion extends javax.swing.JFrame {
                         bus.bindMsg("Palette:ResultatTesterPoint x=(.*) y=(.*) nom=(.*)", new IvyMessageListener() {
                             @Override
                             public void receive(IvyClient ic, String[] strings) {
+                                System.out.println("TEST_isInObj : "+ strings[2]);
                                 if ("".equals(strings[2])) {
                                     isInObj = false;
                                 } else {
@@ -101,12 +103,15 @@ public class Fusion extends javax.swing.JFrame {
                                                 + "couleurContour=(.*)", new IvyMessageListener() {
                                             @Override
                                             public void receive(IvyClient ic, String[] arg) {
-                                                System.err.println(arg[0] + " " + arg[1] +
+                                                System.out.println(arg[0] + " " + arg[1] +
                                                         " " + arg[2] + " " + arg[3] + " " + 
                                                         arg[4] + " " + arg[5] + " " + arg[6]);
                                                 nomTemp = arg[0];
-                                                System.out.println("--------- " + nomTemp);
                                                 colorTemp = arg[5];
+                                                if("Supprimer".equals(command.action)) {
+                                                    listeTemp.put(arg[5], arg[0]);
+                                                    System.out.println(arg[5] + " " +  arg[0]);
+                                                }
                                             }
                                         });
                                     } catch (IvyException ex) {
@@ -146,7 +151,6 @@ public class Fusion extends javax.swing.JFrame {
                                 //tester si dans l'objet
                                 break; 
                             case DIRE_POS :
-                                System.out.println("clic_pos");
                                 setState(PossibleState.DEPL);
                                 command.setPosX(Integer.parseInt(arg1[0]));
                                 command.setPosY(Integer.parseInt(arg1[1]));
@@ -157,26 +161,24 @@ public class Fusion extends javax.swing.JFrame {
                                 break;
                             case DIRE_OBJ :
                                 setState(PossibleState.OBJ_D);
-                                System.out.println("clic_obj");
                                 break;
                             case OBJ_D :
                                 break;  
                             case SUPPR :        // Supprimer
-                                setState(PossibleState.DIRE_S);
-                                command.setPosX(Integer.parseInt(arg1[0]));
-                                command.setPosY(Integer.parseInt(arg1[1]));
+                                setState(PossibleState.CLIC_S);
+                                /*command.setPosX(Integer.parseInt(arg1[0]));
+                                command.setPosY(Integer.parseInt(arg1[1]));*/
+                                command.setNom(nomTemp);
                                 break;
                             case DIRE_S : 
                                 setState(PossibleState.FIN_S);
-                                command.setPosX(Integer.parseInt(arg1[0]));
-                                command.setPosY(Integer.parseInt(arg1[1]));
                                 break;
                             case CLIC_S :
                                 break;
                             case FIN_S :          
                                 break;
                         }
-                        timer.start();
+                        timer.restart();
                     } catch (IvyException ex) {
                         Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -193,8 +195,7 @@ public class Fusion extends javax.swing.JFrame {
                                 geste.addPoint(Integer.parseInt(arg1[0]), Integer.parseInt(arg1[1]));
                                 geste.normalize();
                                 compareGeste();
-                                geste = new Geste(); 
-                                System.out.println(currentState);
+                                geste = new Geste();
                         }
                     } catch (IvyException ex) {
                         Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
@@ -236,7 +237,7 @@ public class Fusion extends javax.swing.JFrame {
                     } else if ("thisCouleur".equals(args[0])) {
                         sayThisColor = true;
                     }
-                    System.out.println("vocal + état : " + currentState);
+                    //System.out.println("vocal + état : " + currentState);
                     switch (currentState){
                         case IDLE :
                             break; 
@@ -304,7 +305,6 @@ public class Fusion extends javax.swing.JFrame {
                         case SUPPR : 
                             if (sayObject) {
                                 setState(PossibleState.DIRE_S);
-                                command.setNom(nomTemp); // recup le nom via info
                             }
                             break;
                         case DIRE_S : 
@@ -312,18 +312,20 @@ public class Fusion extends javax.swing.JFrame {
                         case CLIC_S :
                             if (sayObject) {
                                 setState(PossibleState.FIN_S);
-                                command.setNom(nomTemp); // recup le nom via info
                             }
                             break;
                         case FIN_S :
                             if (sayColor) {
+                                String couleur = args[0].split("couleur")[1];
                                 setState(PossibleState.IDLE);
+                                command.setNom(listeTemp.get(couleur.toLowerCase()));
+                                command.setCouleur(args[0].split("couleur")[1]);
                                 supprObjet(command.getCouleur(), command.getNom());
                                 command.clear();
                             }
                             break;
                     }
-                    timer.start();
+                    timer.restart();
                 }
             });
         } catch (IvyException ex) {
@@ -334,10 +336,6 @@ public class Fusion extends javax.swing.JFrame {
         
     }
     
-    public void restartTimer() {
-        timer.stop();
-        timer.start();
-    }
     /*
     * Fonction permettant d'intialiser le dictionnaiire des gestes
     */
@@ -462,15 +460,23 @@ public class Fusion extends javax.swing.JFrame {
             }
         }
         
-//        System.out.println("rect : " + distanceRect);
-//        System.out.println("cercle : " + distanceCercle);
-//        System.out.println("trait : " + distanceTrait);
-//        System.out.println("croix : " + distanceCroix);
+        System.out.println("----------------------");
+        System.out.println("ETAT : " + geste);
         
         launch(geste);
         this.jLabel2.setText(geste);
+        resetVarTemp();
+        command.action = geste;
         
         return geste;
+    }
+    
+    public void resetVarTemp() {
+        listeTemp.clear();
+        xTemp = -1;
+        yTemp = -1;
+        nomTemp = null;
+        colorTemp = null;
     }
     
     Timer timer = new Timer(5000, new ActionListener() {
@@ -551,10 +557,8 @@ public class Fusion extends javax.swing.JFrame {
                 setState(PossibleState.DEPL);
                 command.setNom(nomTemp);
                 command.setCouleur(colorTemp);
-                System.out.println("Nom : " + command.getNom());
                 break;
             case SUPPR : 
-                System.out.println("SUPPR");
                 setState(PossibleState.IDLE);
                 command.clear();
                 this.jLabel2.setText("");
@@ -572,12 +576,13 @@ public class Fusion extends javax.swing.JFrame {
                 this.jLabel2.setText("");
                 timer.stop();
                 break;
-            case FIN_S :    
+            case FIN_S :
                 setState(PossibleState.IDLE);
+                command.setNom(nomTemp);
                 supprObjet(command.getCouleur(), command.getNom()); 
                 command.clear();
-                 this.jLabel2.setText("");
-                 timer.stop();
+                this.jLabel2.setText("");
+                timer.stop();
                 break; 
         }
     }
@@ -604,6 +609,8 @@ public class Fusion extends javax.swing.JFrame {
     
     public void supprObjet(String color, String nom){
         try {
+            //si colorTemp != null, verifier que colorTemp = color
+            System.out.println("Supprimer obj : " + nom);
             bus.sendMsg("Palette:SupprimerObjet nom=" + nom);
         } catch (IvyException ex) {
             Logger.getLogger(Fusion.class.getName()).log(Level.SEVERE, null, ex);
